@@ -839,6 +839,13 @@ jint Universe::initialize_heap() {
     return status;
   }
 
+  // @rayandrew
+  // add this to call `Ucare` initialize
+  status = Ucare::initialize();
+  if (status != JNI_OK) {
+    return status;
+  }
+
 #ifdef _LP64
   if (UseCompressedOops) {
     // Subtract a page because something can get allocated at heap base.

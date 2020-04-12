@@ -29,6 +29,10 @@
 #include "utilities/array.hpp"
 #include "utilities/growableArray.hpp"
 
+// @rayandrew
+// import `Ucare`
+#include "utilities/ucare.hpp"
+
 // Universe is a name space holding known system classes and objects in the VM.
 //
 // Loaded classes are accessible through the SystemDictionary.
@@ -107,6 +111,11 @@ class Universe: AllStatic {
   friend class VMStructs;
   friend class VM_PopulateDumpSharedSpace;
   friend class Metaspace;
+
+  // @rayandrew
+  // make this to get access to all of the
+  // `Universe` attributes and methods
+  friend class Ucare;
 
   friend jint  universe_init();
   friend void  universe2_init();
