@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##################################################
 ## Make sure that you installed the packages
 ## described here:

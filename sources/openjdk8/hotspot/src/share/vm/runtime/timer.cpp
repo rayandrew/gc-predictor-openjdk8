@@ -66,6 +66,10 @@ void elapsedTimer::stop() {
   }
 }
 
+double elapsedTimer::elapsed_seconds() const {
+  return TimeHelper::counter_to_seconds(os::elapsed_counter() - _start_counter);
+}
+
 double elapsedTimer::seconds() const {
  return TimeHelper::counter_to_seconds(_counter);
 }
@@ -114,15 +118,18 @@ jlong TimeStamp::ticks_since_update() const {
 }
 
 TraceTime::TraceTime(const char* title,
-                     bool doit) {
+                     bool doit)
+  : _title(title) {
   _active   = doit;
   _verbose  = true;
-
+  _print_at_the_end = false;
+  
   if (_active) {
+    _logfile  = tty;
     _accum = NULL;
-    tty->stamp(PrintGCTimeStamps);
-    tty->print("[%s", title);
-    tty->flush();
+    _logfile->stamp(PrintGCTimeStamps);
+    _logfile->print("[%s", title);
+    _logfile->flush();
     _t.start();
   }
 }
@@ -130,14 +137,23 @@ TraceTime::TraceTime(const char* title,
 TraceTime::TraceTime(const char* title,
                      elapsedTimer* accumulator,
                      bool doit,
-                     bool verbose) {
+                     bool verbose,
+                     bool print_at_the_end,
+                     outputStream* logfile)
+  : _title(title) {
   _active = doit;
   _verbose = verbose;
+  _print_at_the_end = print_at_the_end;
   if (_active) {
-    if (_verbose) {
-      tty->stamp(PrintGCTimeStamps);
-      tty->print("[%s", title);
-      tty->flush();
+    if (logfile != NULL) {
+      _logfile = logfile;
+    } else {
+      _logfile = tty;
+    }
+    if (_verbose && !_print_at_the_end) {
+      _logfile->stamp(PrintGCTimeStamps);
+      _logfile->print("[%s", title);
+      _logfile->flush();
     }
     _accum = accumulator;
     _t.start();
@@ -149,8 +165,14 @@ TraceTime::~TraceTime() {
     _t.stop();
     if (_accum!=NULL) _accum->add(_t);
     if (_verbose) {
-      tty->print_cr(", %3.7f secs]", _t.seconds());
-      tty->flush();
+      if (_print_at_the_end) {
+        _logfile->stamp(PrintGCTimeStamps);
+        _logfile->print_cr("[%s, %3.7f secs]", _title, _t.seconds());
+        _logfile->flush();
+      } else {
+        _logfile->print_cr(", %3.7f secs]", _t.seconds());
+        _logfile->flush();
+      }
     }
   }
 }
@@ -164,7 +186,7 @@ TraceCPUTime::TraceCPUTime(bool doit,
   _starting_system_time(0.0),
   _starting_real_time(0.0),
   _logfile(logfile),
-  _error(false) {
+  _error(false) { 
   if (_active) {
     if (logfile != NULL) {
       _logfile = logfile;

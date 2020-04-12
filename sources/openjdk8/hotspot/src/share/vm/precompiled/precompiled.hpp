@@ -254,6 +254,12 @@
 # include "utilities/utf8.hpp"
 # include "utilities/workgroup.hpp"
 # include "utilities/yieldingWorkgroup.hpp"
+
+// @rayandrew
+// add `Ucare` utils
+# include "utilities/ucare.hpp"
+# include "utilities/ucare.inline.hpp"
+
 #ifdef COMPILER2
 # include "libadt/dict.hpp"
 # include "libadt/port.hpp"
@@ -324,6 +330,10 @@
 # include "gc_implementation/shared/gcAdaptivePolicyCounters.hpp"
 # include "gc_implementation/shared/gcPolicyCounters.hpp"
 # include "gc_implementation/shared/parGCAllocBuffer.hpp"
+
+// @rayandrew
+// add `Ucare` gc utils
+# include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
 #endif // INCLUDE_ALL_GCS
 
 #endif // !DONT_USE_PRECOMPILED_HEADER

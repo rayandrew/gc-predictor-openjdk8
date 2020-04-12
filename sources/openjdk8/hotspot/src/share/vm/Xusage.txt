@@ -9,6 +9,7 @@
     -Xnoclassgc       disable class garbage collection
     -Xincgc           enable incremental garbage collection
     -Xloggc:<file>    log GC status to a file with time stamps
+    -Xlogucare:<file> log UCARE tag to a file with time stamps
     -Xbatch           disable background compilation
     -Xms<size>        set initial Java heap size
     -Xmx<size>        set maximum Java heap size

@@ -34,6 +34,9 @@ const GCId GCId::create() {
 const GCId GCId::peek() {
   return GCId(_next_id);
 }
+const GCId GCId::current() {
+  return GCId(_next_id == 0 ? 0 : (_next_id - 1));
+}
 const GCId GCId::undefined() {
   return GCId(UNDEFINED);
 }

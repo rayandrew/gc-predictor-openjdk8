@@ -46,6 +46,11 @@ class elapsedTimer VALUE_OBJ_CLASS_SPEC {
   jlong ticks() const        { return _counter; }
   jlong active_ticks() const;
   bool  is_active() const { return _active; }
+
+  // @rayandrew
+  // add this to know the elapsed seconds
+  // without stopping timer
+  double elapsed_seconds() const;
 };
 
 // TimeStamp is used for recording when an event took place.
@@ -80,10 +85,13 @@ class TimeStamp VALUE_OBJ_CLASS_SPEC {
 
 class TraceTime: public StackObj {
  private:
+  const char*   _title;
   bool          _active;    // do timing
   bool          _verbose;   // report every timing
+  bool          _print_at_the_end;
   elapsedTimer  _t;         // timer
   elapsedTimer* _accum;     // accumulator
+  outputStream* _logfile;   // output is printed to this stream
  public:
   // Constructors
   TraceTime(const char* title,
@@ -91,7 +99,9 @@ class TraceTime: public StackObj {
   TraceTime(const char* title,
             elapsedTimer* accumulator,
             bool doit = true,
-            bool verbose = false);
+            bool verbose = false,
+            bool print_at_the_end = false,
+            outputStream *logfile = NULL);
   ~TraceTime();
 
   // Accessors

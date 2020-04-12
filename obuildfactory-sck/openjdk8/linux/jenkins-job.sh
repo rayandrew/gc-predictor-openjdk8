@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 
 export OBF_PROJECT_NAME=openjdk8

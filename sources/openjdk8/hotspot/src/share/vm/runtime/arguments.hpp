@@ -281,6 +281,11 @@ class Arguments : AllStatic {
   // Option flags
   static bool   _has_profile;
   static const char*  _gc_log_filename;
+  
+  // @rayandrew
+  // add to hold ucare log filename
+  static const char*  _ucare_log_filename;
+  
   // Value of the conservative maximum heap alignment needed
   static size_t  _conservative_max_heap_alignment;
 
@@ -515,6 +520,11 @@ class Arguments : AllStatic {
 
   // -Xloggc:<file>, if not specified will be NULL
   static const char* gc_log_filename()      { return _gc_log_filename; }
+
+  // @rayandrew
+  // add this to create new ucare logger
+  // -Xlogucare:<file>, if not specified will be NULL
+  static const char* ucare_log_filename()   { return _ucare_log_filename; }
 
   // -Xprof
   static bool has_profile()                 { return _has_profile; }

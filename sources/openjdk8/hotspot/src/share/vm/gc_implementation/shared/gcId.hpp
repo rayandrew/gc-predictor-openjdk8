@@ -45,6 +45,7 @@ class GCId VALUE_OBJ_CLASS_SPEC {
 
   static const GCId create();
   static const GCId peek();
+  static const GCId current();
   static const GCId undefined();
 };
 

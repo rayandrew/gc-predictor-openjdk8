@@ -33,6 +33,10 @@
 #include "oops/oop.hpp"
 #include "utilities/stack.hpp"
 
+// @rayandrew
+// add `Ucare` class
+#include "utilities/ucare.hpp"
+
 class GCTaskManager;
 class GCTaskQueue;
 class OopStack;
@@ -47,6 +51,10 @@ class PSScavenge: AllStatic {
   friend class PSIsAliveClosure;
   friend class PSKeepAliveClosure;
   friend class PSPromotionManager;
+
+  // @rayandrew
+  // add this to make `Ucare` friendable
+  friend class Ucare;
 
  enum ScavengeSkippedCause {
    not_skipped = 0,
