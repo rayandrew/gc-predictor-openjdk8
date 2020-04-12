@@ -1,0 +1,7 @@
+# @rayandrew
+# added to not commit and upload build file, etc
+
+sources/openjdk8/.*
+OBF_DROP_DIR/
+java8-gc/
+sources/openjdk8/build/
