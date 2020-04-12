@@ -59,6 +59,13 @@
 #include "utilities/events.hpp"
 #include "utilities/stack.inline.hpp"
 
+// @rayandrew
+// add this to get the live objects
+#include "memory/universe.hpp"
+#include "utilities/ucare.hpp"
+#include "utilities/ucare.inline.hpp"
+#include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
+
 #include <math.h>
 
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
@@ -2001,6 +2008,13 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
   assert(ref_processor() != NULL, "Sanity");
 
+  // @rayandrew
+  // add oop container
+  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "OldGen");
+  Ucare::set_old_gen_oop_container(&oop_container);
+  // reset is alive counter
+  // is_alive_closure()->clear();
+  
   if (GC_locker::check_active_before_gc()) {
     return false;
   }
@@ -2249,6 +2263,12 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   _gc_tracer.report_dense_prefix(dense_prefix(old_space_id));
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
 
+  // @rayandrew
+  // add is_alive_closure
+  Ucare::get_old_gen_oop_container()->add_counter(is_alive_closure());
+  // reset oop container
+  Ucare::reset_old_gen_oop_container();
+  
   return true;
 }
 
@@ -2358,13 +2378,13 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
   TaskQueueSetSuper* qset = ParCompactionManager::region_array();
   ParallelTaskTerminator terminator(active_gc_threads, qset);
 
-  PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
-  PSParallelCompact::FollowStackClosure follow_stack_closure(cm);
-
+  // PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
+  // PSParallelCompact::FollowStackClosure follow_stack_closure(cm);
+  
   // Need new claim bits before marking starts.
   ClassLoaderDataGraph::clear_claimed_marks();
 
-  {
+  {     
     GCTraceTime tm_m("par mark", print_phases(), true, &_gc_timer, _gc_tracer.gc_id());
 
     ParallelScavengeHeap::ParStrongRootsScope psrs;
@@ -2392,9 +2412,18 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
     gc_task_manager()->execute_and_wait(q);
   }
 
+  // @rayandrew
+  // add object counters
+  // Ucare::count_objects(&_is_alive_closure, _gc_tracer.gc_id(), "PSParallelCompact::invoke_no_policy -- after marking");
+
   // Process reference objects found during marking
   {
+  
     GCTraceTime tm_r("reference processing", print_phases(), true, &_gc_timer, _gc_tracer.gc_id());
+    
+    Ucare::MarkAndPushClosure mark_and_push_closure(cm);
+    mark_and_push_closure.set_root_type(Ucare::reference);
+    PSParallelCompact::FollowStackClosure follow_stack_closure(cm);
 
     ReferenceProcessorStats stats;
     if (ref_processor()->processing_is_mt()) {
@@ -2409,6 +2438,12 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
     }
 
     gc_tracer->report_gc_reference_stats(stats);
+    ucarelog_or_tty->print_cr("PSParallelCompact Discovered references: soft_ref=%zu, weak_ref=%zu, final_ref=%zu, phantom_ref=%zu", stats.soft_count(), stats.weak_count(), stats.final_count(), stats.phantom_count());
+
+    // @rayandrew
+    // add and print counter
+    mark_and_push_closure.print_info();
+    Ucare::get_old_gen_oop_container()->add_counter(&mark_and_push_closure);
   }
 
   GCTraceTime tm_c("class unloading", print_phases(), true, &_gc_timer, _gc_tracer.gc_id());

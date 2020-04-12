@@ -34,6 +34,10 @@
 #include "memory/sharedHeap.hpp"
 #include "oops/oop.hpp"
 
+// @rayandrew
+// add `Ucare` class and stuffs
+#include "utilities/ucare.hpp"
+
 class ParallelScavengeHeap;
 class PSAdaptiveSizePolicy;
 class PSYoungGen;
@@ -972,6 +976,10 @@ class PSParallelCompact : AllStatic {
   friend class FollowKlassClosure;
   friend class InstanceClassLoaderKlass;
   friend class RefProcTaskProxy;
+
+  // @rayandrew
+  // add this to make `Ucare` friendable
+  friend class Ucare;
 
  private:
   static STWGCTimer           _gc_timer;

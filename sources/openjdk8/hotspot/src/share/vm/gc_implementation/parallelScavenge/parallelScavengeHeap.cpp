@@ -435,47 +435,161 @@ void ParallelScavengeHeap::do_full_collection(bool clear_all_soft_refs) {
 // time over limit here, that is the responsibility of the heap specific
 // collection methods. This method decides where to attempt allocations,
 // and when to attempt collections, but no collection specific policy.
+
+// @rayandrew
+// modify this to check the time allocation
 HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
   assert(SafepointSynchronize::is_at_safepoint(), "should be at safepoint");
   assert(Thread::current() == (Thread*)VMThread::vm_thread(), "should be in vm thread");
   assert(!Universe::heap()->is_gc_active(), "not reentrant");
   assert(!Heap_lock->owned_by_self(), "this thread should not own the Heap_lock");
+  
+  // @rayandrew
+  // add this line to get this variable in "global scope"
+  // this is required because each scope depends on these
+  // 2 variables. The TraceTime call requires us to create
+  // scope that can make this variable goes out of scope.
+  HeapWord* result      = NULL;
+  bool invoked_full_gc  = false;
 
-  // We assume that allocation in eden will fail unless we collect.
+  // @rayandrew
+  // get id of this gc
+  GCId gc_id = GCId::peek();
+  
+  // @rayandrew
+  // count objects before gc
+  // Ucare::count_all_objects(gc_id, "Before GC");
+  // count oops before gc
+  Ucare::count_oops_before_gc(gc_id);
 
-  // First level allocation failure, scavenge and allocate in young gen.
-  GCCauseSetter gccs(this, GCCause::_allocation_failure);
-  const bool invoked_full_gc = PSScavenge::invoke();
-  HeapWord* result = young_gen()->allocate(size);
+  // @rayandrew
+  // Print Heap Size
+  print_on(ucarelog_or_tty);
+  
+  // @rayandrew
+  // printing mem allocate size
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[Mem allocate size %zu bytes]", size);
+  
+  {
+    TraceTime tt("GC Time", NULL, true, true, true, ucarelog_or_tty);
 
-  // Second level allocation failure.
-  //   Mark sweep and allocate in young generation.
-  if (result == NULL && !invoked_full_gc) {
-    do_full_collection(false);
-    result = young_gen()->allocate(size);
+    // We assume that allocation in eden will fail unless we collect.
+
+    // First level allocation failure, scavenge and allocate in young gen.
+    GCCauseSetter gccs(this, GCCause::_allocation_failure);
+    
+    // @rayandrew
+    // Scope 1 == Phase 1 of failed mem allocate
+    // PSScavenge is running and will try to allocate in the
+    // Young Gen
+    {
+      TraceTime t("[Phase 1][Scavenge_AllocateYoungGen]", NULL, true, true, true, gclog_or_tty);
+      Ucare::add_phase("1");
+      // this `invoke` is actually do LOT OF JOBS inside itself
+      // 1. Scavenge object in young gen
+      //    Requires heap traversal using ScavengeRootsTask in Young Gen Heap only
+      // 2. If failed, do FULL GC
+      //    if UseParallelOldGC -> PSParallelCompact::invoke_no_policy
+      //    else                -> PSMarkSweep::invoke_no_policy
+      //    Both of them maybe do compaction based on the policy and maybe not.
+      //    Both of them traverse the Old Gen Heap
+      invoked_full_gc = PSScavenge::invoke();
+      result = young_gen()->allocate(size);
+    }
+
+
+    // ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    // ucarelog_or_tty->print_cr(" Allocation failed : [ invoked_full_gc: %d, result==NULL: %d ]", invoked_full_gc, result == NULL);
+
+    // Second level allocation failure.
+    //   Mark sweep and allocate in young generation.
+  
+    // @rayandrew
+    // Scope 2 == Phase 2 of failed_mem_allocate
+    // Do full collection but without compaction
+    // Has preq : does not invoke full gc
+    // Allocate in the Young Gen
+    {
+      TraceTime t("[Phase 2][MarkSweepWithoutCompaction_AllocateYoungGen]", NULL, true, true, true, gclog_or_tty);
+    
+      if (result == NULL && !invoked_full_gc) {
+        Ucare::add_phase("2");
+        do_full_collection(false);
+        result = young_gen()->allocate(size);
+      }
+    }
+
+    // @rayandrew
+    // Scope 3 == Phase 3 of failed_mem_allocate
+    // Death March Check of Result after trying to
+    // allocate in the Young Gen.
+    // Summary :
+    // A "death march" is a series of ultra-slow allocations
+    // in which a full gc is done before each allocation,
+    // and after the full gc the allocation still
+    // cannot be satisfied from the young gen
+    {
+      TraceTime t("[Phase 3][DeathMarchCheck]", NULL, true, true, true, gclog_or_tty);
+      Ucare::add_phase("3");
+      death_march_check(result, size);
+    }
+
+    // Third level allocation failure.
+    //   After mark sweep and young generation allocation failure,
+    //   allocate in old generation.
+
+    // @rayandrew
+    // Scope 4 == Phase 4 of failed_mem_allocate
+    // Allocate in Old Gen
+    {
+      TraceTime t("[Phase 4][AllocateOldGen]", NULL, true, true, true, gclog_or_tty);
+      if (result == NULL) {
+        Ucare::add_phase("4");
+        result = old_gen()->allocate(size);
+      }
+    }
+
+    // Fourth level allocation failure. We're running out of memory.
+    //   More complete mark sweep and allocate in young generation.
+
+    // @rayandrew
+    // Scope 5 == Phase 5 of failed_mem_allocate
+    // Do full collection with compaction
+    // This is the condition called "FULL GC"
+    // Will try to allocate in the Young Gen first
+    {
+      TraceTime t("[Phase 5][MarkSweepWithCompaction_AllocateYoungGen]", NULL, true, true, true, gclog_or_tty);
+      if (result == NULL) {
+        Ucare::add_phase("5");
+        do_full_collection(true);
+        result = young_gen()->allocate(size);
+      }
+    }
+
+    // Fifth level allocation failure.
+    //   After more complete mark sweep, allocate in old generation.
+
+    // @rayandrew
+    // Scope 6 == Phase 6 of failed_mem_allocate
+    // Continuation of "FULL GC"
+    // Will try to allocate in Old Gen
+    // after failed to allocate in Young Gen
+    {
+      TraceTime t("[Phase 6][AllocateOldGen]", NULL, true, true, true, gclog_or_tty);
+      if (result == NULL) {
+        Ucare::add_phase("6");
+        result = old_gen()->allocate(size);
+      }
+    }
   }
 
-  death_march_check(result, size);
-
-  // Third level allocation failure.
-  //   After mark sweep and young generation allocation failure,
-  //   allocate in old generation.
-  if (result == NULL) {
-    result = old_gen()->allocate(size);
-  }
-
-  // Fourth level allocation failure. We're running out of memory.
-  //   More complete mark sweep and allocate in young generation.
-  if (result == NULL) {
-    do_full_collection(true);
-    result = young_gen()->allocate(size);
-  }
-
-  // Fifth level allocation failure.
-  //   After more complete mark sweep, allocate in old generation.
-  if (result == NULL) {
-    result = old_gen()->allocate(size);
-  }
+  // @rayandrew
+  // count objects after gc
+  // Ucare::count_all_objects(gc_id, "After GC");
+  // count oops after gc
+  Ucare::count_oops_after_gc(gc_id);
+  Ucare::flush_phase(gc_id);
 
   return result;
 }

@@ -56,12 +56,12 @@ class PSScavenge: AllStatic {
   // add this to make `Ucare` friendable
   friend class Ucare;
 
- enum ScavengeSkippedCause {
-   not_skipped = 0,
-   to_space_not_empty,
-   promoted_too_large,
-   full_follows_scavenge
- };
+  enum ScavengeSkippedCause {
+    not_skipped = 0,
+    to_space_not_empty,
+    promoted_too_large,
+    full_follows_scavenge
+  };
 
   // Saved value of to_space->top(), used to prevent objects in to_space from
   // being rescanned.
