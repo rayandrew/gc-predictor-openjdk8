@@ -88,6 +88,7 @@ inline void Ucare::PSKeepAliveClosure::do_oop_work(T* p) {
   assert ((oopDesc::load_decode_heap_oop_not_null(p))->is_oop(),
           "expected an oop while scanning weak refs");
 
+  inc_total_object_counts();
   // Weak refs may be visited more than once.
   if (PSScavenge::should_scavenge(p, _to_space)) {
     Ucare::copy_and_push_safe_barrier<T, /*promote_immediately=*/false>(this, _promotion_manager, p);
