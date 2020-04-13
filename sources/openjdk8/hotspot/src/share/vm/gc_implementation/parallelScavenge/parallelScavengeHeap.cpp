@@ -464,7 +464,7 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
 
   // @rayandrew
   // Print Heap Size
-  print_on(ucarelog_or_tty);
+  // print_on(ucarelog_or_tty);
   
   // @rayandrew
   // printing mem allocate size
@@ -472,7 +472,10 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
   ucarelog_or_tty->print_cr("[Mem allocate size %zu bytes]", size);
   
   {
-    TraceTime tt("GC Time", NULL, true, true, true, ucarelog_or_tty);
+    stringStream ss;
+    ss.print("GC Time %u", gc_id.id());
+    
+    TraceTime tt(ss.as_string(), NULL, true, true, true, ucarelog_or_tty);
 
     // We assume that allocation in eden will fail unless we collect.
 
