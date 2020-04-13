@@ -475,7 +475,7 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
     stringStream ss;
     ss.print("GC Time %u", gc_id.id());
     
-    TraceTime tt(str.as_string(), NULL, true, true, true, ucarelog_or_tty);
+    TraceTime tt(ss.as_string(), NULL, true, true, true, ucarelog_or_tty);
 
     // We assume that allocation in eden will fail unless we collect.
 
