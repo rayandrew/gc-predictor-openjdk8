@@ -1542,7 +1542,7 @@ PrintJavaVersion(JNIEnv *env, jboolean extraLF)
 
     (*env)->CallStaticVoidMethod(env, ver, print);
     // @cesar: i will add a little of my own here
-    printf("@cesar: This is the UCARE's version of OpenJDK8 for SCk!\n");
+    printf("@rayandrew: This is the UCARE's version of OpenJDK8 for GC Predictor!\n");
 }
 
 /*
