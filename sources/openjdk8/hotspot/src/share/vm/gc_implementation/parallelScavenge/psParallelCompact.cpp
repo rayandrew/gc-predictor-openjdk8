@@ -59,6 +59,13 @@
 #include "utilities/events.hpp"
 #include "utilities/stack.inline.hpp"
 
+// @rayandrew	
+// add this to get the live objects	
+#include "memory/universe.hpp"	
+#include "utilities/ucare.hpp"	
+#include "utilities/ucare.inline.hpp"	
+#include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
+
 #include <math.h>
 
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
