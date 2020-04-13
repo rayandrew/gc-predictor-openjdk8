@@ -41,6 +41,12 @@
 #include "runtime/vmThread.hpp"
 #include "services/management.hpp"
 
+// @rayandrew
+// add `Ucare` and stuffs
+#include "utilities/ucare.hpp"
+#include "utilities/ucare.inline.hpp"
+#include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
+
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 //
@@ -57,7 +63,13 @@ void ThreadRootsMarkingTask::do_it(GCTaskManager* manager, uint which) {
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
 
-  PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
+  // PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
+
+  // @rayandrew
+  // change to `Ucare` closure
+  Ucare::MarkAndPushClosure mark_and_push_closure(cm);
+  mark_and_push_closure.set_root_type(Ucare::threads);
+  
   CLDToOopClosure mark_and_push_from_clds(&mark_and_push_closure, true);
   MarkingCodeBlobClosure mark_and_push_in_blobs(&mark_and_push_closure, !CodeBlobToOopClosure::FixRelocations);
 
@@ -73,6 +85,9 @@ void ThreadRootsMarkingTask::do_it(GCTaskManager* manager, uint which) {
         &mark_and_push_from_clds,
         &mark_and_push_in_blobs);
 
+  mark_and_push_closure.print_info();
+  Ucare::get_old_gen_oop_container()->add_counter(&mark_and_push_closure);
+  
   // Do the real work
   cm->follow_marking_stacks();
 }
@@ -85,52 +100,70 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
     PrintGCDetails && TraceParallelOldGCTasks, true, NULL, PSParallelCompact::gc_tracer()->gc_id()));
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
-  PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
-  PSParallelCompact::FollowKlassClosure follow_klass_closure(&mark_and_push_closure);
 
+  // @rayandrew
+  // keep this as fallback
+  // PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
+  // PSParallelCompact::FollowKlassClosure follow_klass_closure(&mark_and_push_closure);
+
+  // @rayandrew
+  // add `Ucare` implementation of closure
+  Ucare::MarkAndPushClosure mark_and_push_closure(cm);
+  Ucare::FollowKlassClosure follow_klass_closure(&mark_and_push_closure);
+  
   switch (_root_type) {
     case universe:
+      mark_and_push_closure.set_root_type(Ucare::universe);
       Universe::oops_do(&mark_and_push_closure);
       break;
 
     case jni_handles:
+      mark_and_push_closure.set_root_type(Ucare::jni_handles);
       JNIHandles::oops_do(&mark_and_push_closure);
       break;
 
     case threads:
-    {
-      ResourceMark rm;
-      MarkingCodeBlobClosure each_active_code_blob(&mark_and_push_closure, !CodeBlobToOopClosure::FixRelocations);
-      CLDToOopClosure mark_and_push_from_cld(&mark_and_push_closure);
-      Threads::oops_do(&mark_and_push_closure, &mark_and_push_from_cld, &each_active_code_blob);
-    }
-    break;
+      mark_and_push_closure.set_root_type(Ucare::threads);
+      {
+        ResourceMark rm;
+        MarkingCodeBlobClosure each_active_code_blob(&mark_and_push_closure, !CodeBlobToOopClosure::FixRelocations);
+        CLDToOopClosure mark_and_push_from_cld(&mark_and_push_closure);
+        Threads::oops_do(&mark_and_push_closure, &mark_and_push_from_cld, &each_active_code_blob);
+      }
+      break;
 
     case object_synchronizer:
+      mark_and_push_closure.set_root_type(Ucare::object_synchronizer);
       ObjectSynchronizer::oops_do(&mark_and_push_closure);
       break;
 
     case flat_profiler:
+      mark_and_push_closure.set_root_type(Ucare::flat_profiler);
       FlatProfiler::oops_do(&mark_and_push_closure);
       break;
 
     case management:
+      mark_and_push_closure.set_root_type(Ucare::management);
       Management::oops_do(&mark_and_push_closure);
       break;
 
     case jvmti:
+      mark_and_push_closure.set_root_type(Ucare::jvmti); 
       JvmtiExport::oops_do(&mark_and_push_closure);
       break;
 
     case system_dictionary:
+      mark_and_push_closure.set_root_type(Ucare::system_dictionary);
       SystemDictionary::always_strong_oops_do(&mark_and_push_closure);
       break;
 
     case class_loader_data:
+      mark_and_push_closure.set_root_type(Ucare::class_loader_data);
       ClassLoaderDataGraph::always_strong_oops_do(&mark_and_push_closure, &follow_klass_closure, true);
       break;
 
     case code_cache:
+      mark_and_push_closure.set_root_type(Ucare::code_cache);
       // Do not treat nmethods as strong roots for mark/sweep, since we can unload them.
       //CodeCache::scavenge_root_nmethods_do(CodeBlobToOopClosure(&mark_and_push_closure));
       break;
@@ -138,6 +171,9 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
     default:
       fatal("Unknown root type");
   }
+
+  Ucare::get_old_gen_oop_container()->add_counter(&mark_and_push_closure);
+  mark_and_push_closure.print_info();
 
   // Do the real work
   cm->follow_marking_stacks();

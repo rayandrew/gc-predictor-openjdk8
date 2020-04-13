@@ -87,7 +87,8 @@ inline void Ucare::PSKeepAliveClosure::do_oop_work(T* p) {
   assert (!oopDesc::is_null(*p), "expected non-null ref");
   assert ((oopDesc::load_decode_heap_oop_not_null(p))->is_oop(),
           "expected an oop while scanning weak refs");
-
+  
+  inc_total_object_counts();
   // Weak refs may be visited more than once.
   if (PSScavenge::should_scavenge(p, _to_space)) {
     Ucare::copy_and_push_safe_barrier<T, /*promote_immediately=*/false>(this, _promotion_manager, p);
@@ -116,8 +117,7 @@ inline void Ucare::mark_and_push(TraceAndCountRootOopClosure* closure,
       }
     } else {
       // has been marked before?
-      assert(PSParallelCompact::is_marked(obj), "obj has marked");
-      
+      assert(PSParallelCompact::mark_bitmap()->is_marked(obj), "obj has been marked");
       closure->inc_live_object_counts();
     }
   }
