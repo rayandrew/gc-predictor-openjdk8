@@ -2369,7 +2369,13 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
   TaskQueueSetSuper* qset = ParCompactionManager::region_array();
   ParallelTaskTerminator terminator(active_gc_threads, qset);
 
-  PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
+  // PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
+  // PSParallelCompact::FollowStackClosure follow_stack_closure(cm);
+
+  // @rayandrew
+  // add custom counter
+  Ucare::MarkAndPushClosure mark_and_push_closure(cm);
+  mark_and_push_closure.set_root_type(Ucare::reference);
   PSParallelCompact::FollowStackClosure follow_stack_closure(cm);
 
   // Need new claim bits before marking starts.
@@ -2442,6 +2448,11 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
   // Clean up unreferenced symbols in symbol table.
   SymbolTable::unlink();
   _gc_tracer.report_object_count_after_gc(is_alive_closure());
+
+  // @rayandrew
+  // add and print counter
+  mark_and_push_closure.print_info();
+  Ucare::get_old_gen_oop_container()->add_counter(&mark_and_push_closure);
 }
 
 void PSParallelCompact::follow_class_loader(ParCompactionManager* cm,
