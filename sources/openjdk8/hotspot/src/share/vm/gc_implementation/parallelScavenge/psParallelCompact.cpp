@@ -2005,6 +2005,11 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     return false;
   }
 
+  // @rayandrew
+  // add oop container
+  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "OldGen");
+  Ucare::set_old_gen_oop_container(&oop_container);
+
   ParallelScavengeHeap* heap = gc_heap();
 
   _gc_timer.register_gc_start();
@@ -2249,6 +2254,12 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   _gc_tracer.report_dense_prefix(dense_prefix(old_space_id));
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
 
+  // @rayandrew
+  // add is_alive_closure
+  // Ucare::get_old_gen_oop_container()->add_counter(is_alive_closure());
+  // reset oop container
+  Ucare::reset_old_gen_oop_container();
+  
   return true;
 }
 
