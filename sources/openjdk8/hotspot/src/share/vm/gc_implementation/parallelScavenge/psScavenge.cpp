@@ -264,6 +264,11 @@ bool PSScavenge::invoke_no_policy() {
   assert(_preserved_mark_stack.is_empty(), "should be empty");
   assert(_preserved_oop_stack.is_empty(), "should be empty");
 
+  // @rayandrew
+  // add oop container
+  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "YoungGen");
+  Ucare::set_young_gen_oop_container(&oop_container);
+
   _gc_timer.register_gc_start();
 
   TimeStamp scavenge_entry;
@@ -706,6 +711,10 @@ bool PSScavenge::invoke_no_policy() {
   _gc_timer.register_gc_end();
 
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
+
+  // @rayandrew
+  // reset oop container
+  Ucare::reset_young_gen_oop_container();
 
   return !promotion_failure_occurred;
 }
