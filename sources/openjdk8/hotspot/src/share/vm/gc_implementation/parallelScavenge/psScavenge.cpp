@@ -447,7 +447,12 @@ bool PSScavenge::invoke_no_policy() {
 
       reference_processor()->setup_policy(false); // not always_clear
       reference_processor()->set_active_mt_degree(active_workers);
-      PSKeepAliveClosure keep_alive(promotion_manager);
+      // PSKeepAliveClosure keep_alive(promotion_manager);
+
+      // @rayandrew
+      // add counter
+      Ucare::PSKeepAliveClosure keep_alive(promotion_manager);
+      
       PSEvacuateFollowersClosure evac_followers(promotion_manager);
       ReferenceProcessorStats stats;
       if (reference_processor()->processing_is_mt()) {
@@ -469,13 +474,27 @@ bool PSScavenge::invoke_no_policy() {
       } else {
         reference_processor()->enqueue_discovered_references(NULL);
       }
+
+      // @rayandrew
+      // add and print counter
+      keep_alive.print_info();
+      Ucare::get_young_gen_oop_container()->add_counter(&keep_alive);
     }
 
     {
       GCTraceTime tm("StringTable", false, false, &_gc_timer, _gc_tracer.gc_id());
       // Unlink any dead interned Strings and process the remaining live ones.
       PSScavengeRootsClosure root_closure(promotion_manager);
-      StringTable::unlink_or_oops_do(&_is_alive_closure, &root_closure);
+
+      // StringTable::unlink_or_oops_do(&_is_alive_closure, &root_closure);
+      
+      // @rayandrew
+      // add counter
+      Ucare::PSIsAliveClosure is_alive_closure;
+      is_alive_closure.set_root_type(Ucare::string_table);
+      StringTable::unlink_or_oops_do(&is_alive_closure, &root_closure);
+      is_alive_closure.print_info();
+      Ucare::get_young_gen_oop_container()->add_counter(&is_alive_closure);
     }
 
     // Finally, flush the promotion_manager's labs, and deallocate its stacks.
