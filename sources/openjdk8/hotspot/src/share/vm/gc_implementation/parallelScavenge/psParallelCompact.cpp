@@ -2012,15 +2012,16 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     return false;
   }
 
-  // @rayandrew
-  // add oop container
-  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "OldGen");
-  Ucare::set_old_gen_oop_container(&oop_container);
-
   ParallelScavengeHeap* heap = gc_heap();
 
   _gc_timer.register_gc_start();
   _gc_tracer.report_gc_start(heap->gc_cause(), _gc_timer.gc_start());
+
+  // @rayandrew
+  // add oop container
+  // ALWAYS AFTER _gc_tracer!
+  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "OldGen");
+  Ucare::set_old_gen_oop_container(&oop_container);
 
   TimeStamp marking_start;
   TimeStamp compaction_start;

@@ -124,7 +124,14 @@ void RuntimeService::record_safepoint_begin() {
     gclog_or_tty->date_stamp(PrintGCDateStamps);
     gclog_or_tty->stamp(PrintGCTimeStamps);
     gclog_or_tty->print_cr("Application time: %3.7f seconds",
-                                last_application_time_sec());
+                           last_application_time_sec());
+
+    // @rayandrew
+    // add this as safepoint starting point
+    ucarelog_or_tty->date_stamp(PrintGCDateStamps);
+    ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    ucarelog_or_tty->print_cr("Application time: %3.7f seconds",
+                              last_application_time_sec());
   }
 
   // update the time stamp to begin recording safepoint time
@@ -164,6 +171,16 @@ void RuntimeService::record_safepoint_end() {
                            "Stopping threads took: %3.7f seconds",
                            last_safepoint_time_sec(),
                            _last_safepoint_sync_time_sec);
+
+    // @rayandrew
+    // add this as starting point
+    ucarelog_or_tty->date_stamp(PrintGCDateStamps);
+    ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    ucarelog_or_tty->print_cr("Total time for which application threads "
+                              "were stopped: %3.7f seconds, "
+                              "Stopping threads took: %3.7f seconds",
+                              last_safepoint_time_sec(),
+                              _last_safepoint_sync_time_sec);
   }
 
   // update the time stamp to begin recording app time
