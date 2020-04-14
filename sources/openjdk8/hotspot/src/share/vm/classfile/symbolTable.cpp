@@ -867,6 +867,11 @@ void StringTable::buckets_unlink_or_oops_do(BoolObjectClosure* is_alive, OopClos
          err_msg("Index ordering: start_idx=" INT32_FORMAT", end_idx=" INT32_FORMAT,
                  start_idx, end_idx));
 
+  // @rayandrew
+  // add string table counter
+  size_t ucare_processed = 0;
+  size_t ucare_removed = 0;
+
   for (int i = start_idx; i < end_idx; ++i) {
     HashtableEntry<oop, mtSymbol>** p = the_table()->bucket_addr(i);
     HashtableEntry<oop, mtSymbol>* entry = the_table()->bucket(i);
@@ -882,11 +887,18 @@ void StringTable::buckets_unlink_or_oops_do(BoolObjectClosure* is_alive, OopClos
         *p = entry->next();
         the_table()->free_entry(entry);
         (*removed)++;
+        ucare_removed++;
       }
       (*processed)++;
+      ucare_processed++;
       entry = *p;
     }
   }
+  
+  // @rayandrew
+  // add this to know the params of StringTable
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[StringTableInfo table_size=%d, processed=%zu, removed=%zu]", the_table()->table_size(), ucare_processed, ucare_removed);
 }
 
 void StringTable::oops_do(OopClosure* f) {

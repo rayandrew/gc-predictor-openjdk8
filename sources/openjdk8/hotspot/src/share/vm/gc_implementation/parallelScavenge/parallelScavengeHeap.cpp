@@ -464,7 +464,7 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
 
   // @rayandrew
   // Print Heap Size
-  // print_on(ucarelog_or_tty);
+  print_on(ucarelog_or_tty);
   
   // @rayandrew
   // printing mem allocate size

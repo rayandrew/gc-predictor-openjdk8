@@ -484,6 +484,7 @@ bool PSScavenge::invoke_no_policy() {
 
     {
       GCTraceTime tm("StringTable", false, false, &_gc_timer, _gc_tracer.gc_id());
+      TraceTime tt("StringTableTime", NULL, true, true, true, ucarelog_or_tty);
       // Unlink any dead interned Strings and process the remaining live ones.
       PSScavengeRootsClosure root_closure(promotion_manager);
 
