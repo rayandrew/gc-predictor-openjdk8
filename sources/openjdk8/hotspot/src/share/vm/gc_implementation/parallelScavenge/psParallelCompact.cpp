@@ -2017,12 +2017,6 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   _gc_timer.register_gc_start();
   _gc_tracer.report_gc_start(heap->gc_cause(), _gc_timer.gc_start());
 
-  // @rayandrew
-  // add oop container
-  // ALWAYS AFTER _gc_tracer!
-  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "OldGen");
-  Ucare::set_old_gen_oop_container(&oop_container);
-
   TimeStamp marking_start;
   TimeStamp compaction_start;
   TimeStamp collection_exit;
@@ -2031,6 +2025,14 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   PSYoungGen* young_gen = heap->young_gen();
   PSOldGen* old_gen = heap->old_gen();
   PSAdaptiveSizePolicy* size_policy = heap->size_policy();
+
+  // @rayandrew
+  // add oop container
+  // ALWAYS AFTER _gc_tracer!
+  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "OldGen");
+  Ucare::set_old_gen_oop_container(&oop_container);
+  // add timer
+  TraceTime tt("OldGenTime", NULL, true, true, true, ucarelog_or_tty);
 
   // The scope of casr should end after code that can change
   // CollectorPolicy::_should_clear_all_soft_refs.
