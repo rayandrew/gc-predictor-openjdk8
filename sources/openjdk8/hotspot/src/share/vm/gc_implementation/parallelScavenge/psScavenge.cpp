@@ -384,6 +384,20 @@ bool PSScavenge::invoke_no_policy() {
     // For PrintGCDetails
     size_t young_gen_used_before = young_gen->used_in_bytes();
 
+    // @rayandrew
+    // print heap used size
+    // add used capacity etc
+    ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    ucarelog_or_tty->print_cr("[YoungGen size, capacity=%zuB used=%zuB free=%zuB]",
+                              young_gen->capacity_in_bytes(),
+                              young_gen->used_in_bytes(),
+                              young_gen->free_in_bytes());
+    ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    ucarelog_or_tty->print_cr("[OldGen size, capacity=%zuB used=%zuB free=%zuB]",
+                              old_gen->capacity_in_bytes(),
+                              old_gen->used_in_bytes(),
+                              old_gen->free_in_bytes());
+
     // Reset our survivor overflow.
     set_survivor_overflow(false);
 
