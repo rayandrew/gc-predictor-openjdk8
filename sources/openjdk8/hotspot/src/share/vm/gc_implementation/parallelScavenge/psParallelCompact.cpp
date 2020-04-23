@@ -2461,7 +2461,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   // @rayandrew
   // add and print counter
-  mark_and_push_closure.print_info();
+  // mark_and_push_closure.print_info();
   Ucare::get_old_gen_oop_container()->add_counter(&mark_and_push_closure);
 }
 

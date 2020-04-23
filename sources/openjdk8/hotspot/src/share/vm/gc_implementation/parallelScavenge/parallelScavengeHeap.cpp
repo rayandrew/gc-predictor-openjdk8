@@ -460,16 +460,24 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
   // count objects before gc
   // Ucare::count_all_objects(gc_id, "Before GC");
   // count oops before gc
-  Ucare::count_oops_before_gc(gc_id);
+  // Ucare::count_oops_before_gc(gc_id);
+  // mark the start of gc
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[GC Start id=%u]", gc_id.id());
 
   // @rayandrew
   // Print Heap Size
-  print_on(ucarelog_or_tty);
+  // print_on(ucarelog_or_tty);
   
   // @rayandrew
   // printing mem allocate size
   ucarelog_or_tty->stamp(PrintGCTimeStamps);
   ucarelog_or_tty->print_cr("[Mem allocate size %zu bytes]", size);
+
+  // @rayandrew
+  // check NUMA
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[UseNUMA %d]", UseNUMA);
   
   {
     stringStream ss;
@@ -591,8 +599,11 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
   // count objects after gc
   // Ucare::count_all_objects(gc_id, "After GC");
   // count oops after gc
-  Ucare::count_oops_after_gc(gc_id);
+  // Ucare::count_oops_after_gc(gc_id);
   Ucare::flush_phase(gc_id);
+  // mark the end of GC
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[GC Finish id=%u]", gc_id.id());
 
   return result;
 }

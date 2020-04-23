@@ -85,7 +85,7 @@ void ThreadRootsMarkingTask::do_it(GCTaskManager* manager, uint which) {
         &mark_and_push_from_clds,
         &mark_and_push_in_blobs);
 
-  mark_and_push_closure.print_info();
+  // mark_and_push_closure.print_info();
   Ucare::get_old_gen_oop_container()->add_counter(&mark_and_push_closure);
   
   // Do the real work
@@ -173,7 +173,7 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
   }
 
   Ucare::get_old_gen_oop_container()->add_counter(&mark_and_push_closure);
-  mark_and_push_closure.print_info();
+  // mark_and_push_closure.print_info();
 
   // Do the real work
   cm->follow_marking_stacks();

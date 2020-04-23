@@ -240,6 +240,9 @@ bool PSScavenge::invoke() {
     counters->update_full_follows_scavenge(ffs_val);
   }
 
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[Need full gc %d]", need_full_gc);
+
   if (need_full_gc) {
     GCCauseSetter gccs(heap, GCCause::_adaptive_size_policy);
     CollectorPolicy* cp = heap->collector_policy();
@@ -293,11 +296,6 @@ bool PSScavenge::invoke_no_policy() {
   PSOldGen* old_gen = heap->old_gen();
   PSAdaptiveSizePolicy* size_policy = heap->size_policy();
 
-  // @rayandrew
-  // add oop container
-  // ALWAYS AFTER _gc_tracer!
-  Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "YoungGen");
-  Ucare::set_young_gen_oop_container(&oop_container);
   // add timer
   TraceTime tt("YoungGenTime", NULL, true, true, true, ucarelog_or_tty);
 
@@ -341,6 +339,13 @@ bool PSScavenge::invoke_no_policy() {
     GCTraceTime t1(GCCauseString("GC", gc_cause), PrintGC, !PrintGCDetails, NULL, _gc_tracer.gc_id());
     TraceCollectorStats tcs(counters());
     TraceMemoryManagerStats tms(false /* not full GC */,gc_cause);
+
+    // @rayandrew
+    // add oop container
+    // ALWAYS AFTER _gc_tracer!
+    Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "YoungGen");
+    Ucare::set_young_gen_oop_container(&oop_container);
+    oop_container.suspend();
 
     if (TraceGen0Time) accumulated_time()->start();
 
@@ -409,6 +414,10 @@ bool PSScavenge::invoke_no_policy() {
 
       GCTaskQueue* q = GCTaskQueue::create();
 
+      // @rayandrew
+      // resume timer
+      oop_container.resume();
+
       if (!old_gen->object_space()->is_empty()) {
         // There are only old-to-young pointers if there are objects
         // in the old gen.
@@ -440,6 +449,11 @@ bool PSScavenge::invoke_no_policy() {
       }
 
       gc_task_manager()->execute_and_wait(q);
+
+      // @rayandrew
+      // suspend timer
+      oop_container.suspend();
+
     }
 
     scavenge_midpoint.update();
@@ -451,6 +465,10 @@ bool PSScavenge::invoke_no_policy() {
       reference_processor()->setup_policy(false); // not always_clear
       reference_processor()->set_active_mt_degree(active_workers);
       // PSKeepAliveClosure keep_alive(promotion_manager);
+
+      // @rayandrew
+      // resume timer
+      oop_container.resume();
 
       // @rayandrew
       // add counter
@@ -480,8 +498,12 @@ bool PSScavenge::invoke_no_policy() {
 
       // @rayandrew
       // add and print counter
-      keep_alive.print_info();
+      // keep_alive.print_info();
       Ucare::get_young_gen_oop_container()->add_counter(&keep_alive);
+
+      // @rayandrew
+      // suspend timer
+      oop_container.suspend();
     }
 
     {
@@ -491,22 +513,33 @@ bool PSScavenge::invoke_no_policy() {
       PSScavengeRootsClosure root_closure(promotion_manager);
 
       // StringTable::unlink_or_oops_do(&_is_alive_closure, &root_closure);
-      
+
+      // @rayandrew
+      // suspend timer
+      oop_container.resume();
+
       // @rayandrew
       // add counter
       Ucare::PSIsAliveClosure is_alive_closure;
       is_alive_closure.set_root_type(Ucare::string_table);
       StringTable::unlink_or_oops_do(&is_alive_closure, &root_closure);
-      is_alive_closure.print_info();
+      // is_alive_closure.print_info();
       Ucare::get_young_gen_oop_container()->add_counter(&is_alive_closure);
+
+      // @rayandrew
+      // suspend timer
+      oop_container.suspend();
     }
 
-    // Finally, flush the promotion_manager's labs, and deallocate its stacks.
-    promotion_failure_occurred = PSPromotionManager::post_scavenge(_gc_tracer);
-    if (promotion_failure_occurred) {
-      clean_up_failed_promotion();
-      if (PrintGC) {
-        gclog_or_tty->print("--");
+    {
+      TraceTime tt("PostScavenge", NULL, true, true, true, ucarelog_or_tty);
+      // Finally, flush the promotion_manager's labs, and deallocate its stacks.
+      promotion_failure_occurred = PSPromotionManager::post_scavenge(_gc_tracer);
+      if (promotion_failure_occurred) {
+        clean_up_failed_promotion();
+        if (PrintGC) {
+          gclog_or_tty->print("--");
+        }
       }
     }
 
@@ -516,6 +549,8 @@ bool PSScavenge::invoke_no_policy() {
     size_policy->minor_collection_end(gc_cause);
 
     if (!promotion_failure_occurred) {
+      TraceTime tt("AfterPostScavenge", NULL, true, true, true, ucarelog_or_tty);
+
       // Swap the survivor spaces.
       young_gen->eden_space()->clear(SpaceDecorator::Mangle);
       young_gen->from_space()->clear(SpaceDecorator::Mangle);
@@ -666,6 +701,7 @@ bool PSScavenge::invoke_no_policy() {
 
     {
       GCTraceTime tm("Prune Scavenge Root Methods", false, false, &_gc_timer, _gc_tracer.gc_id());
+      TraceTime tt("PruneScavenge", NULL, true, true, true, ucarelog_or_tty);
 
       CodeCache::prune_scavenge_root_nmethods();
     }
@@ -700,6 +736,11 @@ bool PSScavenge::invoke_no_policy() {
     heap->update_counters();
 
     gc_task_manager()->release_idle_workers();
+
+
+    // @rayandrew
+    // reset oop container
+    Ucare::reset_young_gen_oop_container();
   }
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
@@ -734,10 +775,6 @@ bool PSScavenge::invoke_no_policy() {
   _gc_timer.register_gc_end();
 
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
-
-  // @rayandrew
-  // reset oop container
-  Ucare::reset_young_gen_oop_container();
 
   return !promotion_failure_occurred;
 }

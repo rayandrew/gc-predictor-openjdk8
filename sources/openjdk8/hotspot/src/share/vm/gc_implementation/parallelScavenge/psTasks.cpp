@@ -65,13 +65,13 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
     case universe:
       roots_closure.set_root_type(Ucare::universe);
       Universe::oops_do(&roots_closure);
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case jni_handles:
       roots_closure.set_root_type(Ucare::jni_handles);
       JNIHandles::oops_do(&roots_closure);
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case threads:
@@ -81,25 +81,25 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
         CLDClosure* cld_closure = NULL; // Not needed. All CLDs are already visited.
         Threads::oops_do(&roots_closure, cld_closure, NULL);
       }
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case object_synchronizer:
       roots_closure.set_root_type(Ucare::object_synchronizer);
       ObjectSynchronizer::oops_do(&roots_closure);
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case flat_profiler:
       roots_closure.set_root_type(Ucare::flat_profiler);
       FlatProfiler::oops_do(&roots_closure);
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case system_dictionary:
       roots_closure.set_root_type(Ucare::system_dictionary);
       SystemDictionary::oops_do(&roots_closure);
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case class_loader_data:
@@ -107,7 +107,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
       {
         Ucare::PSScavengeKlassClosure klass_closure(pm);
         ClassLoaderDataGraph::oops_do(&roots_closure, &klass_closure, false);
-        roots_closure.print_info();
+        // roots_closure.print_info();
         Ucare::get_young_gen_oop_container()->add_counter(klass_closure.get_oop_closure());
         // roots_closure.add_counter(klass_closure.get_oop_closure());
         // Ucare::get_young_gen_oop_container()->add_counter(&klass_closure);
@@ -117,13 +117,13 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
     case management:
       roots_closure.set_root_type(Ucare::management);
       Management::oops_do(&roots_closure);
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case jvmti:
       roots_closure.set_root_type(Ucare::jvmti);
       JvmtiExport::oops_do(&roots_closure);
-      roots_closure.print_info();
+      // roots_closure.print_info();
       break;
 
     case code_cache: 
@@ -132,7 +132,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
         MarkingCodeBlobClosure each_scavengable_code_blob(&roots_to_old_closure, CodeBlobToOopClosure::FixRelocations);
         CodeCache::scavenge_root_nmethods_do(&each_scavengable_code_blob);
       }
-      roots_to_old_closure.print_info();
+      // roots_to_old_closure.print_info();
       break;
 
     default:
@@ -173,7 +173,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
 
   Ucare::get_young_gen_oop_container()->add_counter(&roots_closure);
 
-  roots_closure.print_info();
+  // roots_closure.print_info();
   
   // Do the real work
   pm->drain_stacks(false);

@@ -407,6 +407,10 @@ void CodeCache::drop_scavenge_root_nmethod(nmethod* nm) {
 void CodeCache::prune_scavenge_root_nmethods() {
   assert_locked_or_safepoint(CodeCache_lock);
 
+  // @rayandrew
+  // count pointers
+  size_t counter = 0;
+  
   if (UseG1GC) {
     return;
   }
@@ -416,6 +420,7 @@ void CodeCache::prune_scavenge_root_nmethods() {
   nmethod* last = NULL;
   nmethod* cur = scavenge_root_nmethods();
   while (cur != NULL) {
+    counter++;
     nmethod* next = cur->scavenge_root_link();
     debug_only(cur->clear_scavenge_root_marked());
     assert(cur->scavenge_root_not_marked(), "");
@@ -436,6 +441,11 @@ void CodeCache::prune_scavenge_root_nmethods() {
     }
     cur = next;
   }
+
+  // @rayandrew
+  // print pointer counter
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[PruneScavengeRootNmethods %zu]", counter);
 
   // Check for stray marks.
   debug_only(verify_perm_nmethods(NULL));

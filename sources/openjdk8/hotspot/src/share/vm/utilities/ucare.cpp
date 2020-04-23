@@ -26,12 +26,12 @@ void Ucare::add_phase(const char* phase) {
 
 void Ucare::flush_phase(const GCId &gc_id) {
   stringStream ss;
-  ss.print("phase gc_id %u: [", gc_id.id());
+  ss.print("[Phase gc_id %u: { ", gc_id.id());
   for (GrowableArrayIterator<const char*> it = _phase->begin(); it != _phase->end(); ++it) {
     const char* phase = *it;
     ss.print("%s ", phase);
   }
-  ss.print("]");
+  ss.print("} ]");
     // ss.print("%s::%s", name, get_root_type_as_string(type));
   // return ss.as_string();
   ucarelog_or_tty->stamp(PrintGCTimeStamps);
@@ -267,8 +267,8 @@ void Ucare::TraceAndCountRootOopClosure::print_info(const char* additional_id) {
 }
 
 //// TraceAndCountRootOopClosureContainer
-Ucare::TraceAndCountRootOopClosureContainer::TraceAndCountRootOopClosureContainer(GCId gc_id, const char* context, bool verbose): _gc_id(gc_id), _context(context), _added_count(0), _verbose(verbose) {
-  if (_verbose) {
+Ucare::TraceAndCountRootOopClosureContainer::TraceAndCountRootOopClosureContainer(GCId gc_id, const char* context, bool verbose, bool only_summary): _gc_id(gc_id), _context(context), _added_count(0), _verbose(verbose), _only_summary(only_summary) {
+  if (_verbose && !_only_summary) {
     ucarelog_or_tty->stamp(PrintGCTimeStamps);
     ucarelog_or_tty->print_cr("[TraceCountRootOopClosureContainer: context=%s, gc_id=%u", context, gc_id.id());
   }
@@ -276,7 +276,12 @@ Ucare::TraceAndCountRootOopClosureContainer::TraceAndCountRootOopClosureContaine
 
 Ucare::TraceAndCountRootOopClosureContainer::~TraceAndCountRootOopClosureContainer() {
   if (_verbose) {
-    ucarelog_or_tty->print_cr("  summaries: context=%s, gc_id=%u, elapsed=%3.7fms, roots_walk_count=%zu, dead_objects=%zu, live_objects=%zu, total_objects=%zu]", _context, _gc_id.id(), _t.elapsed_seconds() * 1000.0, _added_count, get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
+    if (_only_summary) {
+      ucarelog_or_tty->stamp(PrintGCTimeStamps);
+      ucarelog_or_tty->print_cr("[TraceCountRootOopClosureContainer: context=%s, gc_id=%u, elapsed=%3.7fms, roots_walk_count=%zu, dead_objects=%zu, live_objects=%zu, total_objects=%zu]", _context, _gc_id.id(), _t.elapsed_seconds() * 1000.0, _added_count, get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
+    } else {
+      ucarelog_or_tty->print_cr("  summaries: context=%s, gc_id=%u, elapsed=%3.7fms, roots_walk_count=%zu, dead_objects=%zu, live_objects=%zu, total_objects=%zu]", _context, _gc_id.id(), _t.elapsed_seconds() * 1000.0, _added_count, get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
+    }
   }
 }
 

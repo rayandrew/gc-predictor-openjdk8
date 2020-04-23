@@ -54,7 +54,7 @@ void Ucare::PSScavengeFromKlassClosure::do_klass_barrier() {
 }
 
 Ucare::PSScavengeKlassClosure::~PSScavengeKlassClosure() {
-  ucarelog_or_tty->print_cr("    PSScavengeKlassClosure: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", _oop_closure.elapsed_milliseconds(), _oop_closure.get_dead_object_counts(), _oop_closure.get_live_object_counts(), _oop_closure.get_total_object_counts());
+  // ucarelog_or_tty->print_cr("    PSScavengeKlassClosure: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", _oop_closure.elapsed_milliseconds(), _oop_closure.get_dead_object_counts(), _oop_closure.get_live_object_counts(), _oop_closure.get_total_object_counts());
 }
 
 void Ucare::PSScavengeKlassClosure::do_klass(Klass* klass) {

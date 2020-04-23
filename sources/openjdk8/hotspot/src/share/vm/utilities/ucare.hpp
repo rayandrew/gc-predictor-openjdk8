@@ -138,6 +138,10 @@ class Ucare : AllStatic {
         ~TraceTimeMixin();
         double elapsed_seconds() const;
         double elapsed_milliseconds() const;
+
+        // Activation
+        inline void suspend()  { if (_active) _t.stop();  }
+        inline void resume()   { if (_active) _t.start(); }
     };
   
     class RootTypeMixin : public StackObj {
@@ -237,14 +241,15 @@ class Ucare : AllStatic {
         void print_info(const char* additional_id = "");
     };
 
-    class TraceAndCountRootOopClosureContainer : protected ObjectCounterMixin, protected TraceTimeMixin {
+    class TraceAndCountRootOopClosureContainer : protected ObjectCounterMixin, public TraceTimeMixin {
       private:
         const GCId _gc_id;
         const char* _context;
         size_t _added_count;
         bool _verbose;
+        bool _only_summary;
       public:
-        TraceAndCountRootOopClosureContainer(GCId gc_id, const char* context = "", bool verbose = true);
+        TraceAndCountRootOopClosureContainer(GCId gc_id, const char* context = "", bool verbose = true, bool only_summary = true);
         ~TraceAndCountRootOopClosureContainer();
         void reset_counter();
 
