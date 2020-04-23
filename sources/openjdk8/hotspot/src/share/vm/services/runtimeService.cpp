@@ -128,10 +128,10 @@ void RuntimeService::record_safepoint_begin() {
 
     // @rayandrew
     // add this as safepoint starting point
-    ucarelog_or_tty->date_stamp(PrintGCDateStamps);
-    ucarelog_or_tty->stamp(PrintGCTimeStamps);
-    ucarelog_or_tty->print_cr("Application time: %3.7f seconds",
-                              last_application_time_sec());
+    // ucarelog_or_tty->date_stamp(PrintGCDateStamps);
+    // ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    // ucarelog_or_tty->print_cr("Application time: %3.7f seconds",
+    //                           last_application_time_sec());
   }
 
   // update the time stamp to begin recording safepoint time
