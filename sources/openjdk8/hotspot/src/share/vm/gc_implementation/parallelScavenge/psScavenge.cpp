@@ -322,9 +322,12 @@ bool PSScavenge::invoke_no_policy() {
 
   size_t prev_used = heap->used();
 
-  // Fill in TLABs
-  heap->accumulate_statistics_all_tlabs();
-  heap->ensure_parsability(true);  // retire TLABs
+  {
+    TraceTime ttz("HeapActionTime", NULL, true, true, true, ucarelog_or_tty);
+    // Fill in TLABs
+    heap->accumulate_statistics_all_tlabs();
+    heap->ensure_parsability(true);  // retire TLABs
+  }
 
   if (VerifyBeforeGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
