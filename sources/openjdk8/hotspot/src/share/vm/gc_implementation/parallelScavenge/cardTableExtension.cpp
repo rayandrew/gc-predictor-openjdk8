@@ -148,6 +148,11 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
   // consistent with the number of stripes so that the complete slice
   // is covered.
   size_t slice_width = ssize * stripe_total;
+
+  // @rayandrew
+  // add iteration counter
+  size_t counter = 0;
+  
   for (jbyte* slice = start_card; slice < end_card; slice += slice_width) {
     jbyte* worker_start_card = slice + stripe_number * ssize;
     if (worker_start_card >= end_card)
@@ -156,6 +161,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
     jbyte* worker_end_card = worker_start_card + ssize;
     if (worker_end_card > end_card)
       worker_end_card = end_card;
+
+    // @rayandrew
+    // incrementing...
+    counter++;
 
     // We do not want to scan objects more than once. In order to accomplish
     // this, we assert that any object with an object head inside our 'slice'
@@ -318,6 +327,27 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
       current_card++;
     }
   }
+
+  // @rayandrew
+  // print the counter
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[OldToYoungRootsTaskGeneralInfo, "
+                            "stripe_num=%u "
+                            "stripe_total=%u "
+                            "ssize=%d "
+                            "start_card=%zu "
+                            "end_card=%zu "
+                            "slice_width=%zu "
+                            "distance=%.3f "
+                            "iteration_counter=%zu]",
+                            stripe_number,
+                            stripe_total,
+                            ssize,
+                            (uintptr_t) start_card,
+                            (uintptr_t) end_card,
+                            slice_width,
+                            (float)((end_card - start_card) / slice_width),
+                            counter);
 }
 
 // This should be called before a scavenge.

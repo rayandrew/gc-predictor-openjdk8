@@ -448,6 +448,14 @@ bool PSScavenge::invoke_no_policy() {
       // @rayandrew
       // resume timer
       oop_container.resume();
+      //`output oldtoyoungrootstask stuffs
+      // this should be linear with (end_card - start_card) / stripe_total
+      // byte_for is implemented in CardTableModRefBs (in memory/cardTableModRefBS.hpp)
+      // start_card = byte_for(old_gen->object_space()->bottom())
+      // end_card   = byte_for(old_top - 1) + 1
+      // ucarelog_or_tty->stamp(PrintGCTimeStamps);
+      // ucarelog_or_tty->print_cr("[OldToYoungRootsTaskGeneralInfo, stripe_total=%d, start_card=%d]",
+      //                        active_workers);
 
       if (!old_gen->object_space()->is_empty()) {
         // There are only old-to-young pointers if there are objects
