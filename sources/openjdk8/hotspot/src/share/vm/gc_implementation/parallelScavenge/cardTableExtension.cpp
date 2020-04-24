@@ -32,6 +32,10 @@
 #include "oops/oop.psgc.inline.hpp"
 #include "runtime/prefetch.inline.hpp"
 
+// @rayandrew
+// add timer
+#include "runtime/timer.hpp"
+
 // Checks an individual oop for missing precise marks. Mark
 // may be either dirty or newgen.
 class CheckForUnmarkedOops : public OopClosure {
@@ -135,6 +139,11 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                                                     PSPromotionManager* pm,
                                                     uint stripe_number,
                                                     uint stripe_total) {
+  // @rayandrew
+  // add timer
+  elapsedTimer t;
+  t.start();
+
   int ssize = 128; // Naked constant!  Work unit = 64k.
   int dirty_card_count = 0;
 
@@ -328,10 +337,14 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
     }
   }
 
+
   // @rayandrew
+  // stopping timer
+  t.stop();
   // print the counter
   ucarelog_or_tty->stamp(PrintGCTimeStamps);
   ucarelog_or_tty->print_cr("[OldToYoungRootsTaskGeneralInfo, "
+                            "elapsed=%3.7fs "
                             "stripe_num=%u "
                             "stripe_total=%u "
                             "ssize=%d "
@@ -340,6 +353,7 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                             "slice_width=%zu "
                             "distance=%.3f "
                             "iteration_counter=%zu]",
+                            t.seconds(),
                             stripe_number,
                             stripe_total,
                             ssize,
