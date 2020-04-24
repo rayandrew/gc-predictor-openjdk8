@@ -48,6 +48,7 @@
 #include "utilities/ucare.hpp"
 #include "utilities/ucare.inline.hpp"
 #include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
+#include "runtime/timer.hpp"
 
 //
 // ScavengeRootsTask
@@ -224,6 +225,10 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
   assert(_stripe_number < ParallelGCThreads, "Sanity");
 
   {
+    // @rayandrew
+    // add old gen to young gen card table processor
+    TraceTime t("OldToYoungRootsTaskTime", NULL, true, true, true, ucarelog_or_tty);
+
     PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
 
     assert(Universe::heap()->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
