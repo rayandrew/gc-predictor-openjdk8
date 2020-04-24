@@ -343,15 +343,15 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
   t.stop();
   // print the counter
   ucarelog_or_tty->stamp(PrintGCTimeStamps);
-  ucarelog_or_tty->print_cr("[OldToYoungRootsTaskGeneralInfo, "
-                            "elapsed=%3.7fs "
-                            "stripe_num=%u "
-                            "stripe_total=%u "
-                            "ssize=%d "
-                            "start_card=%zu "
-                            "end_card=%zu "
-                            "slice_width=%zu "
-                            "distance=%.3f "
+  ucarelog_or_tty->print_cr("[OldToYoungRootsTaskGeneralInfo: "
+                            "elapsed=%3.7fs, "
+                            "stripe_num=%u, "
+                            "stripe_total=%u, "
+                            "ssize=%d, "
+                            "start_card=%zu, "
+                            "end_card=%zu, "
+                            "slice_width=%zu, "
+                            "distance=%.3f, "
                             "iteration_counter=%zu]",
                             t.seconds(),
                             stripe_number,

@@ -424,6 +424,11 @@ bool PSScavenge::invoke_no_policy() {
     uint active_workers = gc_task_manager()->active_workers();
     heap->set_par_threads(active_workers);
 
+    // @rayandrew
+    // output parallel workers
+    ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    ucarelog_or_tty->print_cr("[GCParallelWorkers %u]", active_workers);
+
     {
       // @rayandrew
       // check time pre_scavenge
