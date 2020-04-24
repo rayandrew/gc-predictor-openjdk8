@@ -160,7 +160,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
 
   // @rayandrew
   // add iteration counter
-  size_t counter = 0;
+  size_t slice_counter = 0;
+  size_t dirty_card_counter = 0;
+  size_t objects_scanned_counter = 0;
+  size_t total_max_card_pointer_being_walked_through = 0;
   
   for (jbyte* slice = start_card; slice < end_card; slice += slice_width) {
     jbyte* worker_start_card = slice + stripe_number * ssize;
@@ -173,7 +176,7 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
 
     // @rayandrew
     // incrementing...
-    counter++;
+    slice_counter++;
 
     // We do not want to scan objects more than once. In order to accomplish
     // this, we assert that any object with an object head inside our 'slice'
@@ -228,6 +231,11 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
     assert(worker_start_card <= end_card, "worker start card beyond end card");
     assert(worker_end_card <= end_card, "worker end card beyond end card");
 
+    // @rayandrew
+    // add total maximum card pointer
+    total_max_card_pointer_being_walked_through +=
+      (uintptr_t) worker_end_card - (uintptr_t) worker_start_card;
+
     jbyte* current_card = worker_start_card;
     while (current_card < worker_end_card) {
       // Find an unclean card.
@@ -263,6 +271,11 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
       jbyte* following_clean_card = current_card;
 
       if (first_unclean_card < worker_end_card) {
+        // @rayandrew
+        // got the unclean card
+        // now process
+        dirty_card_counter++;
+
         oop* p = (oop*) start_array->object_start(addr_for(first_unclean_card));
         assert((HeapWord*)p <= addr_for(first_unclean_card), "checking");
         // "p" should always be >= "last_scanned" because newly GC dirtied
@@ -304,6 +317,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
         // scan all objects in the range
         if (interval != 0) {
           while (p < to) {
+            // @rayandrew
+            // increment objects
+            objects_scanned_counter++;
+
             Prefetch::write(p, interval);
             oop m = oop(p);
             assert(m->is_oop_or_null(), "check for header");
@@ -313,6 +330,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
           pm->drain_stacks_cond_depth();
         } else {
           while (p < to) {
+            // @rayandrew
+            // increment objects
+            objects_scanned_counter++;
+
             oop m = oop(p);
             assert(m->is_oop_or_null(), "check for header");
             m->push_contents(pm);
@@ -352,7 +373,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                             "end_card=%zu, "
                             "slice_width=%zu, "
                             "distance=%.3f, "
-                            "iteration_counter=%zu]",
+                            "slice_counter=%zu, "
+                            "dirty_card_counter=%zu, "
+                            "objects_scanned_counter=%zu, "
+                            "total_max_card_pointer_being_walked_through=%zu]",
                             t.seconds(),
                             stripe_number,
                             stripe_total,
@@ -361,7 +385,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                             (uintptr_t) end_card,
                             slice_width,
                             (float)((end_card - start_card) / slice_width),
-                            counter);
+                            slice_counter,
+                            dirty_card_counter,
+                            objects_scanned_counter,
+                            total_max_card_pointer_being_walked_through);
 }
 
 // This should be called before a scavenge.
