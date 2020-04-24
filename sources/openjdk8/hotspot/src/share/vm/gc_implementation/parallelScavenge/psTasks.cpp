@@ -227,7 +227,7 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
   {
     // @rayandrew
     // add old gen to young gen card table processor
-    TraceTime t("OldToYoungRootsTaskTime", NULL, true, true, true, ucarelog_or_tty);
+    // TraceTime t("OldToYoungRootsTaskTime", NULL, true, true, true, ucarelog_or_tty);
 
     PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
 
