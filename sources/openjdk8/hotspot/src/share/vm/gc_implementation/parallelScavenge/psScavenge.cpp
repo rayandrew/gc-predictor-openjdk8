@@ -323,7 +323,10 @@ bool PSScavenge::invoke_no_policy() {
   size_t prev_used = heap->used();
 
   {
+    // @rayandrew
+    // check time heap action
     TraceTime ttz("HeapActionTime", NULL, true, true, true, ucarelog_or_tty);
+
     // Fill in TLABs
     heap->accumulate_statistics_all_tlabs();
     heap->ensure_parsability(true);  // retire TLABs
@@ -421,12 +424,23 @@ bool PSScavenge::invoke_no_policy() {
     uint active_workers = gc_task_manager()->active_workers();
     heap->set_par_threads(active_workers);
 
-    PSPromotionManager::pre_scavenge();
+    {
+      // @rayandrew
+      // check time pre_scavenge
+      TraceTime ttz("PreScavengeTime", NULL, true, true, true, ucarelog_or_tty);
+
+      PSPromotionManager::pre_scavenge();
+    }
 
     // We'll use the promotion manager again later.
     PSPromotionManager* promotion_manager = PSPromotionManager::vm_thread_promotion_manager();
     {
       GCTraceTime tm("Scavenge", false, false, &_gc_timer, _gc_tracer.gc_id());
+
+      // @rayandrew
+      // check time scavenge
+      TraceTime ttz("ScavengeTime", NULL, true, true, true, ucarelog_or_tty);
+
       ParallelScavengeHeap::ParStrongRootsScope psrs;
 
       GCTaskQueue* q = GCTaskQueue::create();
@@ -479,6 +493,10 @@ bool PSScavenge::invoke_no_policy() {
     {
       GCTraceTime tm("References", false, false, &_gc_timer, _gc_tracer.gc_id());
 
+      // @rayandrew
+      // check time scavenge
+      TraceTime ttz("ReferencesTime", NULL, true, true, true, ucarelog_or_tty);
+
       reference_processor()->setup_policy(false); // not always_clear
       reference_processor()->set_active_mt_degree(active_workers);
       // PSKeepAliveClosure keep_alive(promotion_manager);
@@ -525,7 +543,11 @@ bool PSScavenge::invoke_no_policy() {
 
     {
       GCTraceTime tm("StringTable", false, false, &_gc_timer, _gc_tracer.gc_id());
+
+      // @rayandrew
+      // get stringtable time
       TraceTime tt("StringTableTime", NULL, true, true, true, ucarelog_or_tty);
+
       // Unlink any dead interned Strings and process the remaining live ones.
       PSScavengeRootsClosure root_closure(promotion_manager);
 
@@ -549,7 +571,10 @@ bool PSScavenge::invoke_no_policy() {
     }
 
     {
-      TraceTime tt("PostScavenge", NULL, true, true, true, ucarelog_or_tty);
+      // @rayandrew
+      // add postscavenge time
+      TraceTime tt("PostScavengeTime", NULL, true, true, true, ucarelog_or_tty);
+
       // Finally, flush the promotion_manager's labs, and deallocate its stacks.
       promotion_failure_occurred = PSPromotionManager::post_scavenge(_gc_tracer);
       if (promotion_failure_occurred) {
@@ -566,7 +591,7 @@ bool PSScavenge::invoke_no_policy() {
     size_policy->minor_collection_end(gc_cause);
 
     if (!promotion_failure_occurred) {
-      TraceTime tt("AfterPostScavenge", NULL, true, true, true, ucarelog_or_tty);
+      TraceTime tt("AfterPostScavengeTime", NULL, true, true, true, ucarelog_or_tty);
 
       // Swap the survivor spaces.
       young_gen->eden_space()->clear(SpaceDecorator::Mangle);
@@ -718,7 +743,10 @@ bool PSScavenge::invoke_no_policy() {
 
     {
       GCTraceTime tm("Prune Scavenge Root Methods", false, false, &_gc_timer, _gc_tracer.gc_id());
-      TraceTime tt("PruneScavenge", NULL, true, true, true, ucarelog_or_tty);
+
+      // @rayandrew
+      // get prunescavengetime
+      TraceTime tt("PruneScavengeTime", NULL, true, true, true, ucarelog_or_tty);
 
       CodeCache::prune_scavenge_root_nmethods();
     }
