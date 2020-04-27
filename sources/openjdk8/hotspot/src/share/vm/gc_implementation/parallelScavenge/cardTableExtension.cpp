@@ -168,6 +168,7 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
   size_t dirty_card_counter = 0;
   size_t objects_scanned_counter = 0;
   size_t total_max_card_pointer_being_walked_through = 0;
+  size_t card_increment_counter = 0;
   
   for (jbyte* slice = start_card; slice < end_card; slice += slice_width) {
     jbyte* worker_start_card = slice + stripe_number * ssize;
@@ -245,6 +246,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
       // Find an unclean card.
       while (current_card < worker_end_card && card_is_clean(*current_card)) {
         current_card++;
+
+        // @rayandrew
+        // increment card counter
+        card_increment_counter++;
       }
       jbyte* first_unclean_card = current_card;
 
@@ -252,6 +257,9 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
       while (current_card < worker_end_card && !card_is_clean(*current_card)) {
         while (current_card < worker_end_card && !card_is_clean(*current_card)) {
           current_card++;
+          // @rayandrew
+          // increment card counter
+          card_increment_counter++;
         }
 
         if (current_card < worker_end_card) {
@@ -359,6 +367,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
       // found on it an updated.  If it is now dirty, it cannot be
       // be safely cleaned in the next iteration.
       current_card++;
+
+      // @rayandrew
+      // increment card counter
+      card_increment_counter++;
     }
   }
 
@@ -381,6 +393,7 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                             "slice_counter=%zu, "
                             "dirty_card_counter=%zu, "
                             "objects_scanned_counter=%zu, "
+                            "card_increment_counter=%zu, "
                             "total_max_card_pointer_being_walked_through=%zu]",
                             which,
                             t.seconds(),
@@ -394,6 +407,7 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                             slice_counter,
                             dirty_card_counter,
                             objects_scanned_counter,
+                            card_increment_counter,
                             total_max_card_pointer_being_walked_through);
 }
 
