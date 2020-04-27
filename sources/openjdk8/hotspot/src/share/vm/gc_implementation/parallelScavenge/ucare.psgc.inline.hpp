@@ -17,6 +17,12 @@
 #include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
 #include "gc_implementation/parallelScavenge/psPromotionManager.hpp"
 #include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
+#include "gc_implementation/parallelScavenge/gcTaskManager.hpp"
+#include "gc_implementation/parallelScavenge/psTasks.hpp"
+
+Ucare::RootType scavenge_root_to_ucare_root(ScavengeRootsTask::RootType type);
+const char* scavenge_root_to_ucare_root_as_string(ScavengeRootsTask::RootType type);
+
 
 // Attempt to "claim" oop at p via CAS, push the new obj if successful
 // This version tests the oop* to make sure it is within the heap before

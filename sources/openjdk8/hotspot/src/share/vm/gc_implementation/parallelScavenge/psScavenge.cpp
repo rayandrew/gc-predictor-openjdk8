@@ -437,6 +437,11 @@ bool PSScavenge::invoke_no_policy() {
       PSPromotionManager::pre_scavenge();
     }
 
+    // @rayandrew
+    // mark as starting point of scavenging
+    ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    ucarelog_or_tty->print_cr("[ScavengeStart]", active_workers);
+
     // We'll use the promotion manager again later.
     PSPromotionManager* promotion_manager = PSPromotionManager::vm_thread_promotion_manager();
     {
@@ -453,6 +458,8 @@ bool PSScavenge::invoke_no_policy() {
       // @rayandrew
       // resume timer
       oop_container.resume();
+
+      // @rayandrew
       //`output oldtoyoungrootstask stuffs
       // this should be linear with (end_card - start_card) / stripe_total
       // byte_for is implemented in CardTableModRefBs (in memory/cardTableModRefBS.hpp)
@@ -499,6 +506,11 @@ bool PSScavenge::invoke_no_policy() {
       oop_container.suspend();
 
     }
+
+    // @rayandrew
+    // mark as end point of scavenging
+    ucarelog_or_tty->stamp(PrintGCTimeStamps);
+    ucarelog_or_tty->print_cr("[ScavengeEnd]", active_workers);
 
     scavenge_midpoint.update();
 

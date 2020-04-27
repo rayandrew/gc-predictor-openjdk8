@@ -123,6 +123,7 @@ TraceTime::TraceTime(const char* title,
   _active   = doit;
   _verbose  = true;
   _print_at_the_end = false;
+  _timestamp = true;
   
   if (_active) {
     _logfile  = tty;
@@ -139,11 +140,13 @@ TraceTime::TraceTime(const char* title,
                      bool doit,
                      bool verbose,
                      bool print_at_the_end,
-                     outputStream* logfile)
+                     outputStream* logfile,
+                     bool timestamp)
   : _title(title) {
   _active = doit;
   _verbose = verbose;
   _print_at_the_end = print_at_the_end;
+  _timestamp = timestamp;
   if (_active) {
     if (logfile != NULL) {
       _logfile = logfile;
@@ -151,7 +154,9 @@ TraceTime::TraceTime(const char* title,
       _logfile = tty;
     }
     if (_verbose && !_print_at_the_end) {
-      _logfile->stamp(PrintGCTimeStamps);
+      if (_timestamp) {
+        _logfile->stamp(PrintGCTimeStamps);
+      }
       _logfile->print("[%s", title);
       _logfile->flush();
     }
@@ -166,7 +171,9 @@ TraceTime::~TraceTime() {
     if (_accum!=NULL) _accum->add(_t);
     if (_verbose) {
       if (_print_at_the_end) {
-        _logfile->stamp(PrintGCTimeStamps);
+        if (_timestamp) {
+          _logfile->stamp(PrintGCTimeStamps);
+        }
         _logfile->print_cr("[%s, %3.7f secs]", _title, _t.seconds());
         _logfile->flush();
       } else {

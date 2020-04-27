@@ -195,11 +195,11 @@ double Ucare::TraceTimeMixin::elapsed_milliseconds() const {
 
 const char* Ucare::RootTypeMixin::get_identifier(RootType type, const char* name) {
   stringStream ss;
-  ss.print("%s::%s", name, get_root_type_as_string(type));
+  ss.print("%s::%s", name, Ucare::get_root_type_as_string(type));
   return ss.as_string();
 }
 
-const char* Ucare::RootTypeMixin::get_root_type_as_string(RootType type) {
+const char* Ucare::get_root_type_as_string(RootType type) {
   switch (type) {
     case universe:
       return "universe";
@@ -230,7 +230,6 @@ const char* Ucare::RootTypeMixin::get_root_type_as_string(RootType type) {
   }
 }
 
-
 // closures
 // HeapObjectIterationClosure
 bool Ucare::ObjectIterationClosure::is_object_live(oop obj) {
@@ -248,7 +247,7 @@ void Ucare::ObjectIterationClosure::do_object(oop obj) {
 
 //// TraceAndCountBoolObjectClosure
 void Ucare::TraceAndCountBoolObjectClosure::print_info(const char* additional_id) {
-  ucarelog_or_tty->print_cr("  %s%s: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", RootTypeMixin::get_root_type_as_string(_root_type), additional_id, elapsed_milliseconds(), get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
+  ucarelog_or_tty->print_cr("  %s%s: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", Ucare::get_root_type_as_string(_root_type), additional_id, elapsed_milliseconds(), get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
 }
 
 //// TraceAndCountRootOopClosure
@@ -261,9 +260,22 @@ Ucare::TraceAndCountRootOopClosure::~TraceAndCountRootOopClosure() {
 void Ucare::TraceAndCountRootOopClosure::print_info(const char* additional_id) {
   // no need to check verbose here
   // this call is intended by the caller
+  suspend();
 
   // ucarelog_or_tty->stamp(PrintGCTimeStamps);
-  ucarelog_or_tty->print_cr("  %s%s: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", RootTypeMixin::get_root_type_as_string(_root_type), additional_id, elapsed_milliseconds(), get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
+  ucarelog_or_tty->print_cr("[%s%s: "
+                            "elapsed=%3.7fms, "
+                            "dead=%zu, "
+                            "live=%zu, "
+                            "total=%zu",
+                            Ucare::get_root_type_as_string(_root_type),
+                            additional_id,
+                            elapsed_milliseconds(),
+                            get_dead_object_counts(),
+                            get_live_object_counts(),
+                            get_total_object_counts());
+
+  resume();
 }
 
 //// TraceAndCountRootOopClosureContainer

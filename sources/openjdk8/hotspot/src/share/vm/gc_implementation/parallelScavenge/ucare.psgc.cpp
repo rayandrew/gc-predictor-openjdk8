@@ -8,11 +8,43 @@
 #include "gc_implementation/parallelScavenge/psPromotionManager.hpp"
 #include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
 #include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
+#include "gc_implementation/parallelScavenge/psTasks.hpp"
 
 #include "utilities/ucare.hpp"
 #include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
 
 #if INCLUDE_ALL_GCS
+
+Ucare::RootType scavenge_root_to_ucare_root(ScavengeRootsTask::RootType type) {
+  switch (type) {
+    case ScavengeRootsTask::universe:
+      return Ucare::universe;
+    case ScavengeRootsTask::jni_handles:
+      return Ucare::jni_handles;
+    case ScavengeRootsTask::threads:
+      return Ucare::threads;
+    case ScavengeRootsTask::object_synchronizer:
+      return Ucare::object_synchronizer;
+    case ScavengeRootsTask::flat_profiler:
+      return Ucare::flat_profiler;
+    case ScavengeRootsTask::system_dictionary:
+      return Ucare::system_dictionary;
+    case ScavengeRootsTask::class_loader_data:
+      return Ucare::class_loader_data;
+    case ScavengeRootsTask::management:
+      return Ucare::management;
+    case ScavengeRootsTask::jvmti:
+      return Ucare::jvmti;
+    case ScavengeRootsTask::code_cache:
+      return Ucare::code_cache;
+    default:
+      return Ucare::unknown;
+  }
+}
+
+const char* scavenge_root_to_ucare_root_as_string(ScavengeRootsTask::RootType type) {
+  return Ucare::get_root_type_as_string(scavenge_root_to_ucare_root(type));
+}
 
 // --------------------------------------------------
 // PSScavenge

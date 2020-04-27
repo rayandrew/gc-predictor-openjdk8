@@ -99,7 +99,9 @@ class Ucare : AllStatic {
       reference             = 11,
       string_table          = 12,
     };
-  
+
+    static const char* get_root_type_as_string(RootType type);
+
   private:
     class ObjectCounterMixin: public StackObj {
       private:
@@ -152,14 +154,15 @@ class Ucare : AllStatic {
         static int NUM_OF_ROOTS;
     
       protected:
-        static const char* get_root_type_as_string(RootType type);
         static const char* get_identifier(RootType type, const char* name = "");
-      
+
       public:
         RootTypeMixin(RootType type = unknown): _root_type(type) {}
         void set_root_type(RootType root_type) { _root_type = root_type; }
         RootType get_root_type() const { return _root_type; }
-        const char* get_root_type_as_string() const { return get_root_type_as_string(_root_type); }
+        const char* get_root_type_as_string() const {
+          return Ucare::get_root_type_as_string(_root_type);
+        }
     };
   
     class ObjectIterationClosure : public ObjectClosure, public ObjectCounterMixin {
@@ -376,8 +379,7 @@ class Ucare : AllStatic {
   public:
     Ucare() { ShouldNotReachHere(); }
     ~Ucare() { ShouldNotReachHere(); }
-
-
+   
     // These functions are not MT-safe
     // make sure this called in `Safepoint`
     static BeforeGCRootsOopClosure* get_before_gc_roots_oop_closure();

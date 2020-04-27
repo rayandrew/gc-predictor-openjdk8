@@ -83,6 +83,8 @@ class TimeStamp VALUE_OBJ_CLASS_SPEC {
 //  }
 //
 
+// @rayandrew
+// modified this to logging easily
 class TraceTime: public StackObj {
  private:
   const char*   _title;
@@ -92,6 +94,7 @@ class TraceTime: public StackObj {
   elapsedTimer  _t;         // timer
   elapsedTimer* _accum;     // accumulator
   outputStream* _logfile;   // output is printed to this stream
+  bool          _timestamp; // print timestamp?
  public:
   // Constructors
   TraceTime(const char* title,
@@ -101,7 +104,8 @@ class TraceTime: public StackObj {
             bool doit = true,
             bool verbose = false,
             bool print_at_the_end = false,
-            outputStream *logfile = NULL);
+            outputStream *logfile = NULL,
+            bool timestamp = true);
   ~TraceTime();
 
   // Accessors

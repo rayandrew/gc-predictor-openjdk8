@@ -61,7 +61,21 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
   
   Ucare::PSScavengeRootsClosure roots_closure(pm);
   Ucare::PSPromoteRootsClosure  roots_to_old_closure(pm);
-  
+
+  // @rayandrew
+  // add logger
+  GCId gc_id = GCId::current();
+  stringStream ss;
+  ss.print("ScavengeRootsTask: "
+           "gc_id=%u, "
+           "worker=%u, "
+           "root_type=%s",
+           gc_id.id(),
+           which,
+           scavenge_root_to_ucare_root_as_string(_root_type));
+  TraceTime t(ss.as_string(), NULL, true, true, true, ucarelog_or_tty, false);
+
+
   switch (_root_type) {
     case universe:
       roots_closure.set_root_type(Ucare::universe);
@@ -140,10 +154,18 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
       fatal("Unknown root type");
   }
 
+
+  // @rayandrew
+  // print info
+  ss.reset();
+  ss.print("(gc_id=%u, worker=%u)", gc_id.id(), which);
+
   if (_root_type == code_cache) {
     Ucare::get_young_gen_oop_container()->add_counter(&roots_to_old_closure);
+    roots_to_old_closure.print_info(ss.as_string());
   } else {
     Ucare::get_young_gen_oop_container()->add_counter(&roots_closure);
+    roots_closure.print_info(ss.as_string());
   }
 
   // Do the real work
@@ -157,7 +179,15 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
 void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
   assert(Universe::heap()->is_gc_active(), "called outside gc");
 
+  // @rayandrew
+  // add logger
+  GCId gc_id = GCId::current();
+  stringStream ss;
+  ss.print("ThreadRootsTask: gc_id=%u, worker=%u", gc_id.id(), which);
+  TraceTime t(ss.as_string(), NULL, true, true, true, ucarelog_or_tty, false);
+
   PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
+
   // @rayandrew
   // change to `Ucare` closure
   Ucare::PSScavengeRootsClosure roots_closure(pm);
@@ -174,7 +204,11 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
 
   Ucare::get_young_gen_oop_container()->add_counter(&roots_closure);
 
-  // roots_closure.print_info();
+  // @rayandrew
+  // print info
+  ss.reset();
+  ss.print("(gc_id=%u, worker=%u)", gc_id.id(), which);
+  roots_closure.print_info(ss.as_string());
   
   // Do the real work
   pm->drain_stacks(false);
@@ -189,6 +223,13 @@ StealTask::StealTask(ParallelTaskTerminator* t) :
 
 void StealTask::do_it(GCTaskManager* manager, uint which) {
   assert(Universe::heap()->is_gc_active(), "called outside gc");
+
+  // @rayandrew
+  // add logger
+  GCId gc_id = GCId::current();
+  stringStream ss;
+  ss.print("StealTask: gc_id=%u, worker=%u", gc_id.id(), which);
+  TraceTime t(ss.as_string(), NULL, true, true, true, ucarelog_or_tty, false);
 
   PSPromotionManager* pm =
     PSPromotionManager::gc_thread_promotion_manager(which);
@@ -226,8 +267,10 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
 
   {
     // @rayandrew
-    // add old gen to young gen card table processor
-    // TraceTime t("OldToYoungRootsTaskTime", NULL, true, true, true, ucarelog_or_tty);
+    // add logger
+    stringStream ss;
+    ss.print("OldToYoungRootsTaskTime: gc_id=%u, worker=%u", GCId::current().id(), which);
+    TraceTime t(ss.as_string(), NULL, true, true, true, ucarelog_or_tty, false);
 
     PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
 
@@ -240,7 +283,11 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
                                            _gen_top,
                                            pm,
                                            _stripe_number,
-                                           _stripe_total);
+                                           _stripe_total,
+
+                                           // @rayandrew
+                                           // add this for logging purpose
+                                           which);
 
     // Do the real work
     pm->drain_stacks(false);

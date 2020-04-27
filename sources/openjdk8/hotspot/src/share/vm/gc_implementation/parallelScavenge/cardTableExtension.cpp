@@ -138,7 +138,11 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                                                     HeapWord* space_top,
                                                     PSPromotionManager* pm,
                                                     uint stripe_number,
-                                                    uint stripe_total) {
+                                                    uint stripe_total,
+
+                                                    // @rayandrew
+                                                    // add this for logging purpose
+                                                    uint which) {
   // @rayandrew
   // add timer
   elapsedTimer t;
@@ -363,8 +367,9 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
   // stopping timer
   t.stop();
   // print the counter
-  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  // ucarelog_or_tty->stamp(PrintGCTimeStamps);
   ucarelog_or_tty->print_cr("[OldToYoungRootsTaskGeneralInfo: "
+                            "worker=%u, "
                             "elapsed=%3.7fs, "
                             "stripe_num=%u, "
                             "stripe_total=%u, "
@@ -377,6 +382,7 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                             "dirty_card_counter=%zu, "
                             "objects_scanned_counter=%zu, "
                             "total_max_card_pointer_being_walked_through=%zu]",
+                            which,
                             t.seconds(),
                             stripe_number,
                             stripe_total,
