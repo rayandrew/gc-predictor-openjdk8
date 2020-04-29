@@ -115,6 +115,11 @@ class TraceTime: public StackObj {
   // Activation
   void suspend()  { if (_active) _t.stop();  }
   void resume()   { if (_active) _t.start(); }
+
+  // @rayandrew
+  // add to get elapsedTimer
+  const elapsedTimer& elapsed_timer() const { return _t; }
+  double seconds() const { return _t.seconds(); }
 };
 
 class TraceCPUTime: public StackObj {

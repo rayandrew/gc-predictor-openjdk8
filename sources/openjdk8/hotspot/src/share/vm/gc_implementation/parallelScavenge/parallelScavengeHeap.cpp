@@ -455,7 +455,7 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
   // @rayandrew
   // get id of this gc
   GCId gc_id = GCId::peek();
-  
+
   // @rayandrew
   // count objects before gc
   // Ucare::count_all_objects(gc_id, "Before GC");

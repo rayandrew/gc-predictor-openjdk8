@@ -202,8 +202,10 @@ void PSPromotionManager::reset() {
 }
 
 
-void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
+size_t PSPromotionManager::drain_stacks_depth(bool totally_drain) {
   totally_drain = totally_drain || _totally_drain;
+
+  size_t counter = 0;
 
 #ifdef ASSERT
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
@@ -220,15 +222,18 @@ void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
     // claimed stack while we work.
     while (tq->pop_overflow(p)) {
       process_popped_location_depth(p);
+      counter++;
     }
 
     if (totally_drain) {
       while (tq->pop_local(p)) {
         process_popped_location_depth(p);
+        counter++;
       }
     } else {
       while (tq->size() > _target_stack_size && tq->pop_local(p)) {
         process_popped_location_depth(p);
+        counter++;
       }
     }
   } while (totally_drain && !tq->taskqueue_empty() || !tq->overflow_empty());
@@ -236,6 +241,8 @@ void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
   assert(!totally_drain || tq->taskqueue_empty(), "Sanity");
   assert(totally_drain || tq->size() <= _target_stack_size, "Sanity");
   assert(tq->overflow_empty(), "Sanity");
+
+  return counter;
 }
 
 void PSPromotionManager::flush_labs() {

@@ -1,19 +1,153 @@
 #include "precompiled.hpp"
 
 #include "memory/universe.hpp"
+#include "memory/allocation.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.psgc.inline.hpp"
+
+#include "utilities/ostream.hpp"
+
+#include "utilities/ucare.hpp"
+
+#if INCLUDE_ALL_GCS
 #include "gc_implementation/parallelScavenge/psScavenge.hpp"
 #include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
 #include "gc_implementation/parallelScavenge/psPromotionManager.hpp"
 #include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
 #include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
 #include "gc_implementation/parallelScavenge/psTasks.hpp"
-
-#include "utilities/ucare.hpp"
 #include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
 
-#if INCLUDE_ALL_GCS
+GCWorkerTask::GCWorkerTask(
+  const char* name, GCTask::Kind::kind kind, uint affinity, GCWorkerTask::Type type):
+  _name(name), _kind(kind), _affinity(affinity), _type(type) {
+  elapsed = 0.0;
+  worker = -1;
+
+  // otyrt
+  stripe_num = 0;
+  stripe_total = 0;
+  ssize = 0;
+  slice_width = 0;
+  slice_counter = 0;
+  dirty_card_counter = 0;
+  objects_scanned_counter = 0;
+  card_increment_counter = 0;
+  total_max_card_pointer_being_walked_through = 0;
+
+  // sr
+  live_objects = 0;
+  dead_objects = 0;
+  total_objects = 0;
+
+  // barrier
+  busy_workers = 0;
+
+  // steal
+  stack_depth_counter = 0;
+}
+
+GCWorkerTask::~GCWorkerTask() {
+  // noop
+  ucarelog_or_tty->print_cr("[%s: %s]", type_to_string(), get_value());
+}
+
+const char* GCWorkerTask::get_value() {
+  stringStream ss;
+  switch(_type) {
+    case GCWorkerTask::OTYRT:
+      ss.print("worker=%u, "
+               "elapsed=%3.7fs, "
+               "stripe_num=%u, "
+               "stripe_total=%u, "
+               // "ssize=%d, "
+               "slice_width=%zu, "
+               "slice_counter=%zu, "
+               "dirty_card_counter=%zu, "
+               "objects_scanned_counter=%zu, "
+               "card_increment_counter=%zu, "
+               "total_max_card_pointer_being_walked_through=%zu",
+               worker,
+               elapsed,
+               stripe_num,
+               stripe_total,
+               // ssize,
+               slice_width,
+               slice_counter,
+               dirty_card_counter,
+               objects_scanned_counter,
+               card_increment_counter,
+               total_max_card_pointer_being_walked_through);
+      break;
+
+    case GCWorkerTask::SR:
+      ss.print("worker=%u, "
+               "elapsed=%3.7fs, "
+               "live=%zu, "
+               "dead=%zu, "
+               "total=%zu",
+               worker,
+               elapsed,
+               live_objects,
+               dead_objects,
+               total_objects);
+      break;
+
+    case GCWorkerTask::BARRIER:
+      ss.print("elapsed=%3.7fs, "
+               "busy_workers=%u",
+               elapsed,
+               busy_workers);
+      break;
+
+    case GCWorkerTask::STEAL:
+      ss.print("elapsed=%3.7fs, "
+               "stack_depth_counter=%zu",
+               elapsed,
+               stack_depth_counter);
+      break;
+
+    case GCWorkerTask::NOOP:
+    case GCWorkerTask::IDLE:
+      ss.print("elapsed=%3.7fs",
+               elapsed);
+      break;
+  }
+
+  return ss.as_string();
+}
+
+GCWorkerTracker::GCWorkerTracker(uint id, uint max_gc_worker_tasks):
+  _id(id), _last_idx(0), _is_containing_sr_tasks(false),
+  _elapsed_time(0.0), _task_count(0),
+  _max_gc_worker_tasks(max_gc_worker_tasks), _tasks(NULL) {
+  // initialize _gc_worker_tasks
+  _tasks = NEW_C_HEAP_ARRAY(GCWorkerTask*, _max_gc_worker_tasks, mtGC);
+  for (uint i = 0; i < _max_gc_worker_tasks; i += 1) {
+    _tasks[i] = NULL;
+  }
+}
+
+GCWorkerTracker::~GCWorkerTracker() {
+  ucarelog_or_tty->print_cr("[WorkerTracker: worker=%u start]", _id);
+  ucarelog_or_tty->print_cr("[WorkerTracker: "
+                            "worker=%u, "
+                            "task_count=%u, "
+                            "is_containing_sr_tasks=%u, "
+                            "elapsed_time=%3.7fs]",
+                            _id,
+                            _task_count,
+                            _is_containing_sr_tasks,
+                            _elapsed_time);
+  if (_tasks != NULL) {
+    for (uint i = 0; i < _max_gc_worker_tasks; i += 1) {
+      GCWorkerTask::destroy(_tasks[i]);
+    }
+    FREE_C_HEAP_ARRAY(GCWorkerTask*, _tasks, mtGC);
+    _tasks = NULL;
+  }
+  ucarelog_or_tty->print_cr("[WorkerTracker: worker=%u end]", _id);
+}
 
 Ucare::RootType scavenge_root_to_ucare_root(ScavengeRootsTask::RootType type) {
   switch (type) {

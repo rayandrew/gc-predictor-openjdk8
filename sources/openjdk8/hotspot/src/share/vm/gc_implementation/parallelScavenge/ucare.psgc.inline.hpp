@@ -1,7 +1,9 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_SHARED_UCARE_PSGC_INLINE_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_SHARED_UCARE_PSGC_INLINE_HPP
 
+#include "memory/allocation.hpp"
 #include "utilities/ucare.hpp"
+#include "runtime/globals.hpp"
 
 #if INCLUDE_ALL_GCS
 
@@ -19,6 +21,138 @@
 #include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
 #include "gc_implementation/parallelScavenge/gcTaskManager.hpp"
 #include "gc_implementation/parallelScavenge/psTasks.hpp"
+
+// forward declaration
+class GCWorkerTask;
+class GCWorkerTracker;
+
+
+class GCWorkerTask: public CHeapObj<mtGC> {
+public:
+    enum Type {
+      OTYRT,
+      SR,
+      BARRIER,
+      STEAL,
+      IDLE,
+      NOOP,
+      UNK
+    };
+private:
+    const char*                    _name;
+    const GCTask::Kind::kind       _kind;
+    const uint                     _affinity;
+    const Type                     _type;
+
+    const char* type_to_string() {
+      switch(_type) {
+        case OTYRT:
+          return "OTYRT";
+        case SR:
+          return "SR";
+        case BARRIER:
+          return "BARRIER";
+        case STEAL:
+          return "STEAL";
+        case IDLE:
+          return "IDLE";
+        case NOOP:
+          return "NOOP";
+        default:
+          return "UNK";
+      }
+    }
+// so many setter, getter, make all public
+public:
+    double                   elapsed;
+    uint                     worker;
+
+    // otyrt
+    uint                     stripe_num;
+    uint                     stripe_total;
+    uint                     ssize;
+    uint                     slice_width;
+    size_t                   slice_counter;
+    size_t                   dirty_card_counter;
+    size_t                   objects_scanned_counter;
+    size_t                   card_increment_counter;
+    size_t                   total_max_card_pointer_being_walked_through;
+
+    // sr
+    size_t                   live_objects;
+    size_t                   dead_objects;
+    size_t                   total_objects;
+
+    // barrier
+    uint                     busy_workers;
+
+    // steal
+    size_t                   stack_depth_counter;
+
+public:
+    virtual const char* get_value();
+
+    inline const char* get_name() const { return _name; }
+    inline const GCTask::Kind::kind get_kind() const { return _kind; }
+    inline const uint get_affinity() const { return _affinity; }
+    inline const Type get_type() const { return _type; }
+
+    static GCWorkerTask* create(const char* name, GCTask::Kind::kind kind, uint affinity, Type type = UNK) {
+      return new GCWorkerTask(name, kind, affinity, type);
+    }
+
+    static void destroy(GCWorkerTask* that) {
+      if (that != NULL) {
+        delete that;
+      }
+    }
+
+protected:
+    GCWorkerTask(const char* name, GCTask::Kind::kind kind, uint affinity, Type type);
+    ~GCWorkerTask();
+};
+
+class GCWorkerTracker: public CHeapObj<mtGC> {
+private:
+    const uint      _id;
+    // float           _idle_time;
+    double          _elapsed_time;
+    uint            _task_count;
+    const uint      _max_gc_worker_tasks;
+    GCWorkerTask**  _tasks;
+
+    bool            _is_containing_sr_tasks;
+    uint            _last_idx;
+
+public:
+    static GCWorkerTracker* create(uint id, uint max_gc_worker_tasks = 30) {
+      return new GCWorkerTracker(id, max_gc_worker_tasks);
+    }
+
+    static void destroy(GCWorkerTracker* that) {
+      if (that != NULL) {
+        delete that;
+      }
+    }
+
+    void add_task(GCWorkerTask* task) {
+      if (task != NULL) {
+        _elapsed_time += task->elapsed;
+        task->worker = _id;
+        _task_count++;
+        if (!_is_containing_sr_tasks && task->get_type() == GCWorkerTask::SR) {
+          _is_containing_sr_tasks = true;
+        }
+        if (_last_idx < _max_gc_worker_tasks) {
+          _tasks[_last_idx++] = task;
+        }
+      }
+    }
+
+protected:
+    GCWorkerTracker(uint id, uint max_gc_worker_tasks);
+    ~GCWorkerTracker();
+};
 
 Ucare::RootType scavenge_root_to_ucare_root(ScavengeRootsTask::RootType type);
 const char* scavenge_root_to_ucare_root_as_string(ScavengeRootsTask::RootType type);

@@ -440,12 +440,16 @@ bool PSScavenge::invoke_no_policy() {
     // @rayandrew
     // mark as starting point of scavenging
     ucarelog_or_tty->stamp(PrintGCTimeStamps);
-    ucarelog_or_tty->print_cr("[ScavengeStart]", active_workers);
+    ucarelog_or_tty->print_cr("[ScavengeStart]");
 
     // We'll use the promotion manager again later.
     PSPromotionManager* promotion_manager = PSPromotionManager::vm_thread_promotion_manager();
     {
       GCTraceTime tm("Scavenge", false, false, &_gc_timer, _gc_tracer.gc_id());
+
+      // @rayandrew
+      // preparing gc worker
+      gc_task_manager()->initialize_worker_trackers();
 
       // @rayandrew
       // check time scavenge
@@ -460,7 +464,7 @@ bool PSScavenge::invoke_no_policy() {
       oop_container.resume();
 
       // @rayandrew
-      //`output oldtoyoungrootstask stuffs
+      // output oldtoyoungrootstask stuffs
       // this should be linear with (end_card - start_card) / stripe_total
       // byte_for is implemented in CardTableModRefBs (in memory/cardTableModRefBS.hpp)
       // start_card = byte_for(old_gen->object_space()->bottom())
@@ -505,12 +509,15 @@ bool PSScavenge::invoke_no_policy() {
       // suspend timer
       oop_container.suspend();
 
+      // @rayandrew
+      // destroy worker trackers
+      gc_task_manager()->destroy_worker_trackers();
     }
 
     // @rayandrew
     // mark as end point of scavenging
     ucarelog_or_tty->stamp(PrintGCTimeStamps);
-    ucarelog_or_tty->print_cr("[ScavengeEnd]", active_workers);
+    ucarelog_or_tty->print_cr("[ScavengeEnd]");
 
     scavenge_midpoint.update();
 

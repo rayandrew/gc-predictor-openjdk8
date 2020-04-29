@@ -33,7 +33,8 @@
 #include "runtime/prefetch.inline.hpp"
 
 // @rayandrew
-// add timer
+// add include
+#include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
 #include "runtime/timer.hpp"
 
 // Checks an individual oop for missing precise marks. Mark
@@ -142,6 +143,10 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
 
                                                     // @rayandrew
                                                     // add this for logging purpose
+                                                    const char* name,
+                                                    GCTask::Kind::kind kind,
+                                                    uint affinity,
+                                                    GCTaskManager* manager,
                                                     uint which) {
   // @rayandrew
   // add timer
@@ -409,6 +414,29 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
                             objects_scanned_counter,
                             card_increment_counter,
                             total_max_card_pointer_being_walked_through);
+
+  // @rayandrew
+  // gc worker tracker
+  GCWorkerTracker* gc_worker_tracker = manager->worker_tracker(which);
+  if (gc_worker_tracker != NULL) {
+    GCWorkerTask* gc_worker_task = GCWorkerTask::create(name,
+                                                        kind,
+                                                        affinity,
+                                                        GCWorkerTask::OTYRT);
+
+    assert(gc_worker_task != NULL, "sanity");
+    gc_worker_task->elapsed = t.seconds();
+    gc_worker_task->stripe_num = stripe_number;
+    gc_worker_task->stripe_total = stripe_total;
+    gc_worker_task->ssize = ssize;
+    gc_worker_task->slice_width = slice_width;
+    gc_worker_task->slice_counter = slice_counter;
+    gc_worker_task->dirty_card_counter = dirty_card_counter;
+    gc_worker_task->objects_scanned_counter = objects_scanned_counter;
+    gc_worker_task->card_increment_counter = card_increment_counter;
+    gc_worker_task->total_max_card_pointer_being_walked_through = total_max_card_pointer_being_walked_through;
+    manager->worker_tracker(which)->add_task(gc_worker_task);
+  }
 }
 
 // This should be called before a scavenge.

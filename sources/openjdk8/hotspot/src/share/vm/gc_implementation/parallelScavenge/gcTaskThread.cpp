@@ -124,6 +124,12 @@ void GCTaskThread::run() {
 
   TimeStamp timer;
 
+  // @rayandrew
+  // add helper
+  elapsedTimer idle_timer;
+  GCTask* last_task = NULL;
+  bool is_last_task_idle = false;
+
   for (;/* ever */;) {
     // These are so we can flush the resources allocated in the inner loop.
     HandleMark   hm_inner;
@@ -163,6 +169,10 @@ void GCTaskThread::run() {
           time_stamp->set_exit_time(timer.ticks());
         }
       } else {
+        if (last_task == NULL) {
+          last_task = task;
+          idle_timer.start();
+        }
         // idle tasks complete outside the normal accounting
         // so that a task can complete without waiting for idle tasks.
         // They have to be terminated separately.

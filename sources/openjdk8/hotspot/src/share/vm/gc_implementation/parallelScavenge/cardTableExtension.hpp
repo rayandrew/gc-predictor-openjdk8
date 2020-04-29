@@ -27,6 +27,8 @@
 
 #include "memory/cardTableModRefBS.hpp"
 
+#include "gc_implementation/parallelScavenge/gcTaskManager.hpp"
+
 class MutableSpace;
 class ObjectStartArray;
 class PSPromotionManager;
@@ -69,6 +71,10 @@ class CardTableExtension : public CardTableModRefBS {
 
                                   // @rayandrew
                                   // added this for logging purpose
+                                  const char* name,
+                                  GCTask::Kind::kind kind,
+                                  uint affinity,
+                                  GCTaskManager* manager,
                                   uint which);
 
   // Verification

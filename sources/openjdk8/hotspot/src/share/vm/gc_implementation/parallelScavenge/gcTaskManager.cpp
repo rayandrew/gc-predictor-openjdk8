@@ -32,6 +32,11 @@
 #include "runtime/mutexLocker.hpp"
 #include "runtime/orderAccess.inline.hpp"
 
+// @rayandrew
+// add GCWorkerTracker
+#include "runtime/timer.hpp"
+#include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
+
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 //
@@ -430,6 +435,14 @@ void GCTaskManager::initialize() {
       tty->cr();
     }
     FREE_C_HEAP_ARRAY(uint, processor_assignment, mtGC);
+
+    // @rayandrew
+    // initialize worker tracker
+    _worker_trackers = NEW_C_HEAP_ARRAY(GCWorkerTracker*, workers(), mtGC);
+
+    for (uint i = 0; i < workers(); i += 1) {
+      set_worker_tracker(i, NULL);
+    }
   }
   reset_busy_workers();
   set_unblocked();
@@ -461,6 +474,15 @@ GCTaskManager::~GCTaskManager() {
     FREE_C_HEAP_ARRAY(GCTaskThread*, _thread, mtGC);
     _thread = NULL;
   }
+
+  // @rayandrew
+  // add deletion of worker tracker
+  if (_worker_trackers != NULL) {
+    destroy_worker_trackers();
+    FREE_C_HEAP_ARRAY(GCWorkerTracker*, _worker_trackers, mtGC);
+    _worker_trackers = NULL;
+  }
+
   if (_resource_flag != NULL) {
     FREE_C_HEAP_ARRAY(bool, _resource_flag, mtGC);
     _resource_flag = NULL;
@@ -590,6 +612,30 @@ void GCTaskManager::set_thread(uint which, GCTaskThread* value) {
   assert(which < workers(), "index out of bounds");
   assert(value != NULL, "shouldn't have null thread");
   _thread[which] = value;
+}
+
+// @rayandrew
+// add helper
+void GCTaskManager::initialize_worker_trackers() {
+  assert(_worker_trackers != NULL, "shouldn't have null worker trackers");
+
+  for (uint t = 0; t < workers(); t += 1) {
+    set_worker_tracker(t, GCWorkerTracker::create(t));
+  }
+}
+
+void GCTaskManager::destroy_worker_trackers() {
+  assert(_worker_trackers != NULL, "shouldn't have null worker trackers");
+  for (uint i = 0; i < workers(); i += 1) {
+    GCWorkerTracker::destroy(worker_tracker(i));
+    set_worker_tracker(i, NULL);
+  }
+}
+
+void GCTaskManager::set_worker_tracker(uint which, GCWorkerTracker* value) {
+  assert(which < workers(), "index out of bounds");
+  assert(value != NULL, "shouldn't have null thread worker");
+  _worker_trackers[which] = value;
 }
 
 void GCTaskManager::add_task(GCTask* task) {
@@ -858,6 +904,10 @@ IdleGCTask* IdleGCTask::create_on_c_heap() {
 }
 
 void IdleGCTask::do_it(GCTaskManager* manager, uint which) {
+  // @rayandrew
+  // add tracetime
+  TraceTime t("IdleGCTask", NULL, true, false, true, ucarelog_or_tty, false);
+
   WaitForBarrierGCTask* wait_for_task = manager->idle_inactive_task();
   if (TraceGCTaskManager) {
     tty->print_cr("[" INTPTR_FORMAT "]"
@@ -892,6 +942,24 @@ void IdleGCTask::do_it(GCTaskManager* manager, uint which) {
       this, wait_for_task->should_wait() ? "true" : "false");
   }
   // Release monitor().
+
+
+  // @rayandrew
+  // stop timer
+  t.suspend();
+  // add tracker
+  GCWorkerTracker* gc_worker_tracker = manager->worker_tracker(which);
+
+  if (gc_worker_tracker != NULL) {
+    GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
+                                                        kind(),
+                                                        affinity(),
+                                                        GCWorkerTask::IDLE);
+
+    assert(gc_worker_task != NULL, "sanity");
+    gc_worker_task->elapsed = t.seconds();
+    manager->worker_tracker(which)->add_task(gc_worker_task);
+  }
 }
 
 void IdleGCTask::destroy(IdleGCTask* that) {
@@ -1039,6 +1107,12 @@ void WaitForBarrierGCTask::destruct() {
 }
 
 void WaitForBarrierGCTask::do_it(GCTaskManager* manager, uint which) {
+  // @rayandrew
+  // add tracetime
+  TraceTime t("WaitForBarrierGCTask", NULL, true, false, true, ucarelog_or_tty, false);
+
+  uint busy_workers_count = manager->busy_workers();
+
   if (TraceGCTaskManager) {
     tty->print_cr("[" INTPTR_FORMAT "]"
                   " WaitForBarrierGCTask::do_it() waiting for idle"
@@ -1065,6 +1139,24 @@ void WaitForBarrierGCTask::do_it(GCTaskManager* manager, uint which) {
     }
     monitor()->notify_all();
     // Release monitor().
+  }
+
+  // @rayandrew
+  // stop timer
+  t.suspend();
+  // add tracker
+  GCWorkerTracker* gc_worker_tracker = manager->worker_tracker(which);
+
+  if (gc_worker_tracker != NULL) {
+    GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
+                                                        kind(),
+                                                        affinity(),
+                                                        GCWorkerTask::BARRIER);
+
+    assert(gc_worker_task != NULL, "sanity");
+    gc_worker_task->elapsed = t.seconds();
+    gc_worker_task->busy_workers = busy_workers_count;
+    manager->worker_tracker(which)->add_task(gc_worker_task);
   }
 }
 

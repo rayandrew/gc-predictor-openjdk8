@@ -55,6 +55,10 @@ class Mutex;
 class Monitor;
 class ThreadClosure;
 
+// @rayandrew
+// forward declaration
+class GCWorkerTracker;
+
 // The abstract base GCTask.
 class GCTask : public ResourceObj {
 public:
@@ -382,6 +386,10 @@ private:
   uint                      _noop_tasks;        // Count of noop tasks.
   WaitForBarrierGCTask*     _idle_inactive_task;// Task for inactive workers
   volatile uint             _idle_workers;      // Number of idled workers
+
+  // @rayandrew
+  // add GCWorkerTracker
+  GCWorkerTracker**        _worker_trackers;    // Array of worker trackers
 public:
   // Factory create and destroy methods.
   static GCTaskManager* create(uint workers) {
@@ -447,6 +455,17 @@ public:
   void print_task_time_stamps();
   void print_threads_on(outputStream* st);
   void threads_do(ThreadClosure* tc);
+
+
+  // @rayandrew
+  // worker tracker stuffs
+  void initialize_worker_trackers();
+  void destroy_worker_trackers();
+  GCWorkerTracker* worker_tracker(uint which) {
+    guarantee(_worker_trackers != NULL, "sanity");
+    guarantee(which >= 0 && which < workers(), "sanity");
+    return _worker_trackers[which];
+  }
 
 protected:
   // Constructors.  Clients use factory, but there might be subclasses.
@@ -559,6 +578,10 @@ protected:
   }
   // Other methods.
   void initialize();
+
+  // @rayandrew
+  // add helper
+  void set_worker_tracker(uint which, GCWorkerTracker* value);
 
  public:
   // Return true if all workers are currently active.

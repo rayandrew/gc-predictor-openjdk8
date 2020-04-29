@@ -183,16 +183,24 @@ class PSPromotionManager VALUE_OBJ_CLASS_SPEC {
   void reset();
 
   void flush_labs();
-  void drain_stacks(bool totally_drain) {
-    drain_stacks_depth(totally_drain);
+
+  // @rayandrew
+  // change into size_t
+  // to output num of process
+  size_t drain_stacks(bool totally_drain) {
+    return drain_stacks_depth(totally_drain);
   }
  public:
-  void drain_stacks_cond_depth() {
+  // @rayandrew
+  // change into size_t
+  // to output num of process
+  size_t drain_stacks_cond_depth() {
     if (claimed_stack_depth()->size() > _target_stack_size) {
-      drain_stacks_depth(false);
+      return drain_stacks_depth(false);
     }
+    return 0;
   }
-  void drain_stacks_depth(bool totally_drain);
+  size_t drain_stacks_depth(bool totally_drain);
 
   bool stacks_empty() {
     return claimed_stack_depth()->is_empty();
