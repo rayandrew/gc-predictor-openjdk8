@@ -1,0 +1,11 @@
+#+TITLE: Notes
+
+* TODO
+** Implement reader :
+- [ ] ScavengeRootsTask -> to be tested
+- OldToYoungRootsTask
+- StealTask
+- BarrierTask
+- [X] ReferenceProcessor
+- [X] Prune
+- [X] StringTable

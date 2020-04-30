@@ -17,6 +17,7 @@
 #include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
 #include "gc_implementation/parallelScavenge/psTasks.hpp"
 #include "gc_implementation/parallelScavenge/ucare.psgc.inline.hpp"
+#include "gc_implementation/parallelScavenge/gcTaskManager.hpp"
 
 GCWorkerTask::GCWorkerTask(
   const char* name, GCTask::Kind::kind kind, uint affinity, GCWorkerTask::Type type):
@@ -54,7 +55,16 @@ GCWorkerTask::~GCWorkerTask() {
 
 const char* GCWorkerTask::get_value() {
   stringStream ss;
-  ss.print("worker=%u, elapsed=3.7fs", worker, elapsed);
+  ss.print("name=%s, "
+           "worker=%u, "
+           "affinity=%u, "
+           "kind=%s, "
+           "elapsed=3.7fs",
+           _name,
+           worker,
+           _affinity,
+           GCTask::Kind::to_string(_kind),
+           elapsed);
 
   switch(_type) {
     case GCWorkerTask::OTYRT:

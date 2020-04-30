@@ -349,9 +349,9 @@ bool PSScavenge::invoke_no_policy() {
     // @rayandrew
     // add oop container
     // ALWAYS AFTER _gc_tracer!
-    Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "YoungGen");
-    Ucare::set_young_gen_oop_container(&oop_container);
-    oop_container.suspend();
+    // Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "YoungGen");
+    // Ucare::set_young_gen_oop_container(&oop_container);
+    // oop_container.suspend();
 
     if (TraceGen0Time) accumulated_time()->start();
 
@@ -461,7 +461,7 @@ bool PSScavenge::invoke_no_policy() {
 
       // @rayandrew
       // resume timer
-      oop_container.resume();
+      // oop_container.resume();
 
       // @rayandrew
       // output oldtoyoungrootstask stuffs
@@ -507,7 +507,7 @@ bool PSScavenge::invoke_no_policy() {
 
       // @rayandrew
       // suspend timer
-      oop_container.suspend();
+      // oop_container.suspend();
 
       // @rayandrew
       // destroy worker trackers
@@ -555,13 +555,33 @@ bool PSScavenge::invoke_no_policy() {
 
       _gc_tracer.report_gc_reference_stats(stats);
 
-      // Enqueue reference objects discovered during scavenge.
-      if (reference_processor()->processing_is_mt()) {
-        PSRefProcTaskExecutor task_executor;
-        reference_processor()->enqueue_discovered_references(&task_executor);
-      } else {
-        reference_processor()->enqueue_discovered_references(NULL);
+      {
+        // @rayandrew
+        // check time scavenge
+        TraceTime ttz("EnqueueDiscoveredTime", NULL, true, true, true, ucarelog_or_tty);
+
+        // Enqueue reference objects discovered during scavenge.
+        if (reference_processor()->processing_is_mt()) {
+          PSRefProcTaskExecutor task_executor;
+          reference_processor()->enqueue_discovered_references(&task_executor);
+        } else {
+          reference_processor()->enqueue_discovered_references(NULL);
+        }
       }
+
+      ucarelog_or_tty->print_cr("[References: "
+                                "soft_count=%zu, soft_count_elapsed=%3.7fs, "
+                                "weak_count=%zu, weak_count_elapsed=%3.7fs, "
+                                "final_count=%zu, final_count_elapsed=%3.7fs, "
+                                "final_count=%zu, phantom_count_elapsed=%3.7fs]",
+                                stats.soft_count(),
+                                stats.soft_count_elapsed(),
+                                stats.weak_count(),
+                                stats.weak_count_elapsed(),
+                                stats.final_count(),
+                                stats.final_count_elapsed(),
+                                stats.phantom_count(),
+                                stats.phantom_count_elapsed());
 
       // @rayandrew
       // add and print counter
@@ -587,7 +607,7 @@ bool PSScavenge::invoke_no_policy() {
 
       // @rayandrew
       // suspend timer
-      oop_container.resume();
+      // oop_container.resume();
 
       // @rayandrew
       // add counter
@@ -595,11 +615,11 @@ bool PSScavenge::invoke_no_policy() {
       is_alive_closure.set_root_type(Ucare::string_table);
       StringTable::unlink_or_oops_do(&is_alive_closure, &root_closure);
       // is_alive_closure.print_info();
-      Ucare::get_young_gen_oop_container()->add_counter(&is_alive_closure);
+      // Ucare::get_young_gen_oop_container()->add_counter(&is_alive_closure);
 
       // @rayandrew
       // suspend timer
-      oop_container.suspend();
+      // oop_container.suspend();
     }
 
     {

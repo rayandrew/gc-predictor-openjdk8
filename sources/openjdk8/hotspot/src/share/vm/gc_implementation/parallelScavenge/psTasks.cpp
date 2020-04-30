@@ -123,7 +123,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
         Ucare::PSScavengeKlassClosure klass_closure(pm);
         ClassLoaderDataGraph::oops_do(&roots_closure, &klass_closure, false);
         // roots_closure.print_info();
-        Ucare::get_young_gen_oop_container()->add_counter(klass_closure.get_oop_closure());
+        // Ucare::get_young_gen_oop_container()->add_counter(klass_closure.get_oop_closure());
         // roots_closure.add_counter(klass_closure.get_oop_closure());
         // Ucare::get_young_gen_oop_container()->add_counter(&klass_closure);
       }
@@ -167,7 +167,10 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
   GCWorkerTracker* gc_worker_tracker = manager->worker_tracker(which);
 
   if (gc_worker_tracker != NULL) {
-    GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
+    stringStream sst;
+    sst.print("ScavengeRootsTask%s",
+              scavenge_root_to_ucare_root_as_string(_root_type));
+    GCWorkerTask* gc_worker_task = GCWorkerTask::create(sst.as_string(),
                                                         kind(),
                                                         affinity(),
                                                         GCWorkerTask::SRT);
@@ -175,14 +178,14 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
     gc_worker_task->elapsed = t.seconds();
 
     if (_root_type == code_cache) {
-      Ucare::get_young_gen_oop_container()->add_counter(&roots_to_old_closure);
-      roots_to_old_closure.print_info(ss.as_string());
+      // Ucare::get_young_gen_oop_container()->add_counter(&roots_to_old_closure);
+      // roots_to_old_closure.print_info(ss.as_string());
       gc_worker_task->live_objects = roots_to_old_closure.get_live_object_counts();
       gc_worker_task->dead_objects = roots_to_old_closure.get_dead_object_counts();
       gc_worker_task->total_objects = roots_to_old_closure.get_total_object_counts();
     } else {
-      Ucare::get_young_gen_oop_container()->add_counter(&roots_closure);
-      roots_closure.print_info(ss.as_string());
+      // Ucare::get_young_gen_oop_container()->add_counter(&roots_closure);
+      // roots_closure.print_info(ss.as_string());
       gc_worker_task->live_objects = roots_closure.get_live_object_counts();
       gc_worker_task->dead_objects = roots_closure.get_dead_object_counts();
       gc_worker_task->total_objects = roots_closure.get_total_object_counts();
@@ -222,7 +225,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
   if (_vm_thread != NULL)
     _vm_thread->oops_do(&roots_closure, roots_from_clds, &roots_in_blobs);
 
-  Ucare::get_young_gen_oop_container()->add_counter(&roots_closure);
+  // Ucare::get_young_gen_oop_container()->add_counter(&roots_closure);
 
   // @rayandrew
   // print info
