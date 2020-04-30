@@ -139,7 +139,6 @@ public:
 
     void add_task(GCWorkerTask* task) {
       if (task != NULL) {
-        tty->print_cr("add task %u", _last_idx);
         if (_last_idx < _max_gc_worker_tasks) {
           task->worker = _id;
           if (!_is_containing_sr_tasks && task->get_type() == GCWorkerTask::SRT) {
