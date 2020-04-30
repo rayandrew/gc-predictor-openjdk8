@@ -35,6 +35,10 @@
 #include "runtime/java.hpp"
 #include "runtime/jniHandles.hpp"
 
+// @rayandrew
+// add timer
+#include "runtime/timer.hpp"
+
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 ReferencePolicy* ReferenceProcessor::_always_clear_soft_ref_policy = NULL;
@@ -213,37 +217,67 @@ ReferenceProcessorStats ReferenceProcessor::process_discovered_references(
 
   // Soft references
   size_t soft_count = 0;
+
+  // @rayandrew
+  // add elapsed
+  double soft_count_elapsed = 0.0;
   {
     GCTraceTime tt("SoftReference", trace_time, false, gc_timer, gc_id);
+    TraceTime ttz("SoftReference", NULL, true, false, true, ucarelog_or_tty);
     soft_count =
       process_discovered_reflist(_discoveredSoftRefs, _current_soft_ref_policy, true,
                                  is_alive, keep_alive, complete_gc, task_executor);
+    ttz.suspend();
+    soft_count_elapsed = ttz.seconds();
   }
 
   update_soft_ref_master_clock();
 
   // Weak references
   size_t weak_count = 0;
+
+  // @rayandrew
+  // add elapsed
+  double weak_count_elapsed = 0.0;
   {
     GCTraceTime tt("WeakReference", trace_time, false, gc_timer, gc_id);
+    TraceTime ttz("WeakReference", NULL, true, false, true, ucarelog_or_tty);
     weak_count =
       process_discovered_reflist(_discoveredWeakRefs, NULL, true,
                                  is_alive, keep_alive, complete_gc, task_executor);
+
+    ttz.suspend();
+    weak_count_elapsed = ttz.seconds();
   }
 
   // Final references
   size_t final_count = 0;
+
+  // @rayandrew
+  // add elapsed
+  double final_count_elapsed = 0.0;
   {
     GCTraceTime tt("FinalReference", trace_time, false, gc_timer, gc_id);
+    TraceTime ttz("FinalReference", NULL, true, false, true, ucarelog_or_tty);
+
     final_count =
       process_discovered_reflist(_discoveredFinalRefs, NULL, false,
                                  is_alive, keep_alive, complete_gc, task_executor);
+
+    ttz.suspend();
+    final_count_elapsed = ttz.seconds();
   }
 
   // Phantom references
   size_t phantom_count = 0;
+
+  // @rayandrew
+  // add elapsed
+  double phantom_count_elapsed = 0.0;
   {
     GCTraceTime tt("PhantomReference", trace_time, false, gc_timer, gc_id);
+    TraceTime ttz("PhantomReference", NULL, true, false, true, ucarelog_or_tty);
+
     phantom_count =
       process_discovered_reflist(_discoveredPhantomRefs, NULL, false,
                                  is_alive, keep_alive, complete_gc, task_executor);
@@ -254,6 +288,9 @@ ReferenceProcessorStats ReferenceProcessor::process_discovered_references(
     phantom_count +=
       process_discovered_reflist(_discoveredCleanerRefs, NULL, true,
                                  is_alive, keep_alive, complete_gc, task_executor);
+
+    ttz.suspend();
+    phantom_count_elapsed = ttz.seconds();
   }
 
   // Weak global JNI references. It would make more sense (semantically) to
@@ -269,7 +306,17 @@ ReferenceProcessorStats ReferenceProcessor::process_discovered_references(
     process_phaseJNI(is_alive, keep_alive, complete_gc);
   }
 
-  return ReferenceProcessorStats(soft_count, weak_count, final_count, phantom_count);
+  return ReferenceProcessorStats(
+    soft_count,
+    weak_count,
+    final_count,
+    phantom_count,
+
+    soft_count_elapsed,
+    weak_count_elapsed,
+    final_count_elapsed,
+    phantom_count_elapsed
+  );
 }
 
 #ifndef PRODUCT

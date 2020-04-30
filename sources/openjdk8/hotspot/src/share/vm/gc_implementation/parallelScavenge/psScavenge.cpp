@@ -531,15 +531,15 @@ bool PSScavenge::invoke_no_policy() {
 
       reference_processor()->setup_policy(false); // not always_clear
       reference_processor()->set_active_mt_degree(active_workers);
-      // PSKeepAliveClosure keep_alive(promotion_manager);
+      PSKeepAliveClosure keep_alive(promotion_manager);
 
       // @rayandrew
       // resume timer
-      oop_container.resume();
+      // oop_container.resume();
 
       // @rayandrew
       // add counter
-      Ucare::PSKeepAliveClosure keep_alive(promotion_manager);
+      // Ucare::PSKeepAliveClosure keep_alive(promotion_manager);
       
       PSEvacuateFollowersClosure evac_followers(promotion_manager);
       ReferenceProcessorStats stats;
@@ -566,11 +566,11 @@ bool PSScavenge::invoke_no_policy() {
       // @rayandrew
       // add and print counter
       // keep_alive.print_info();
-      Ucare::get_young_gen_oop_container()->add_counter(&keep_alive);
+      // Ucare::get_young_gen_oop_container()->add_counter(&keep_alive);
 
       // @rayandrew
       // suspend timer
-      oop_container.suspend();
+      // oop_container.suspend();
     }
 
     {

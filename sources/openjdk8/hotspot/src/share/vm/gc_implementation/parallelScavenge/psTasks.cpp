@@ -170,7 +170,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
     GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
                                                         kind(),
                                                         affinity(),
-                                                        GCWorkerTask::SR);
+                                                        GCWorkerTask::SRT);
 
     gc_worker_task->elapsed = t.seconds();
 
@@ -241,7 +241,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
     GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
                                                         kind(),
                                                         affinity(),
-                                                        GCWorkerTask::SR);
+                                                        GCWorkerTask::TRT);
 
     assert(gc_worker_task != NULL, "sanity");
     gc_worker_task->elapsed = t.seconds();

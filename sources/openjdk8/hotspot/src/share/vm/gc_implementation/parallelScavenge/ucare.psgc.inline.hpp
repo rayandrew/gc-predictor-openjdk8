@@ -31,7 +31,8 @@ class GCWorkerTask: public CHeapObj<mtGC> {
 public:
     enum Type {
       OTYRT,
-      SR,
+      SRT,
+      TRT,
       BARRIER,
       STEAL,
       IDLE,
@@ -48,8 +49,10 @@ private:
       switch(_type) {
         case OTYRT:
           return "OTYRT";
-        case SR:
-          return "SR";
+        case SRT:
+          return "SRT";
+        case TRT:
+          return "TRT";
         case BARRIER:
           return "BARRIER";
         case STEAL:
@@ -140,7 +143,7 @@ public:
         _elapsed_time += task->elapsed;
         task->worker = _id;
         _task_count++;
-        if (!_is_containing_sr_tasks && task->get_type() == GCWorkerTask::SR) {
+        if (!_is_containing_sr_tasks && task->get_type() == GCWorkerTask::SRT) {
           _is_containing_sr_tasks = true;
         }
         if (_last_idx < _max_gc_worker_tasks) {

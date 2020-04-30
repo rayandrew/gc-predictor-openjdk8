@@ -54,11 +54,11 @@ GCWorkerTask::~GCWorkerTask() {
 
 const char* GCWorkerTask::get_value() {
   stringStream ss;
+  ss.print("worker=%u, elapsed=3.7fs", worker, elapsed);
+
   switch(_type) {
     case GCWorkerTask::OTYRT:
-      ss.print("worker=%u, "
-               "elapsed=%3.7fs, "
-               "stripe_num=%u, "
+      ss.print(", stripe_num=%u, "
                "stripe_total=%u, "
                // "ssize=%d, "
                "slice_width=%zu, "
@@ -67,8 +67,6 @@ const char* GCWorkerTask::get_value() {
                "objects_scanned_counter=%zu, "
                "card_increment_counter=%zu, "
                "total_max_card_pointer_being_walked_through=%zu",
-               worker,
-               elapsed,
                stripe_num,
                stripe_total,
                // ssize,
@@ -80,37 +78,30 @@ const char* GCWorkerTask::get_value() {
                total_max_card_pointer_being_walked_through);
       break;
 
-    case GCWorkerTask::SR:
-      ss.print("worker=%u, "
-               "elapsed=%3.7fs, "
-               "live=%zu, "
+    case GCWorkerTask::SRT:
+      ss.print(", live=%zu, "
                "dead=%zu, "
                "total=%zu",
-               worker,
-               elapsed,
                live_objects,
                dead_objects,
                total_objects);
       break;
 
+    case GCWorkerTask::TRT:
+      break;
+
     case GCWorkerTask::BARRIER:
-      ss.print("elapsed=%3.7fs, "
-               "busy_workers=%u",
-               elapsed,
+      ss.print(", busy_workers=%u",
                busy_workers);
       break;
 
     case GCWorkerTask::STEAL:
-      ss.print("elapsed=%3.7fs, "
-               "stack_depth_counter=%zu",
-               elapsed,
+      ss.print(", stack_depth_counter=%zu",
                stack_depth_counter);
       break;
 
     case GCWorkerTask::NOOP:
     case GCWorkerTask::IDLE:
-      ss.print("elapsed=%3.7fs",
-               elapsed);
       break;
   }
 
