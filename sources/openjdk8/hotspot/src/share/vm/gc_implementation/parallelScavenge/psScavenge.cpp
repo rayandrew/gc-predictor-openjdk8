@@ -583,7 +583,7 @@ bool PSScavenge::invoke_no_policy() {
                                 "soft_count=%zu, soft_count_elapsed=%lfs, "
                                 "weak_count=%zu, weak_count_elapsed=%lfs, "
                                 "final_count=%zu, final_count_elapsed=%lfs, "
-                                "final_count=%zu, phantom_count_elapsed=%lfs, "
+                                "phantom_count=%zu, phantom_count_elapsed=%lfs, "
                                 "total_process_elapsed=%lfs, execution_time=%lfs]",
                                 stats.soft_count(),
                                 stats.soft_count_elapsed(),
