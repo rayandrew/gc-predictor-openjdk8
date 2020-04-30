@@ -123,6 +123,7 @@ GCWorkerTracker::GCWorkerTracker(uint id, uint max_gc_worker_tasks):
   _elapsed_time = 0.0;
   // initialize _gc_worker_tasks
   _tasks = NEW_C_HEAP_ARRAY(GCWorkerTask*, _max_gc_worker_tasks, mtGC);
+  guarantee(_tasks != NULL, "sanity");
   for (uint i = 0; i < _max_gc_worker_tasks; i += 1) {
     _tasks[i] = NULL;
   }

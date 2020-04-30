@@ -626,6 +626,7 @@ void GCTaskManager::initialize_worker_trackers() {
 
 void GCTaskManager::destroy_worker_trackers() {
   assert(_worker_trackers != NULL, "shouldn't have null worker trackers");
+
   for (uint i = 0; i < workers(); i += 1) {
     GCWorkerTracker::destroy(worker_tracker(i));
     set_worker_tracker(i, NULL);

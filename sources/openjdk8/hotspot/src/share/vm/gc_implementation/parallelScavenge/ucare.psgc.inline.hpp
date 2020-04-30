@@ -139,13 +139,14 @@ public:
 
     void add_task(GCWorkerTask* task) {
       if (task != NULL) {
-        _elapsed_time += task->elapsed;
-        task->worker = _id;
-        if (!_is_containing_sr_tasks && task->get_type() == GCWorkerTask::SRT) {
-          _is_containing_sr_tasks = true;
-        }
+        tty->print_cr("add task %u", _last_idx);
         if (_last_idx < _max_gc_worker_tasks) {
+          task->worker = _id;
+          if (!_is_containing_sr_tasks && task->get_type() == GCWorkerTask::SRT) {
+            _is_containing_sr_tasks = true;
+          }
           _tasks[_last_idx++] = task;
+          _elapsed_time += task->elapsed;
         }
       }
     }
