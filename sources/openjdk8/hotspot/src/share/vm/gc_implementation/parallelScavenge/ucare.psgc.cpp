@@ -59,7 +59,7 @@ const char* GCWorkerTask::get_value() {
            "worker=%u, "
            "affinity=%u, "
            "kind=%s, "
-           "elapsed=3.7fs",
+           "elapsed=%3.7fs",
            _name,
            worker,
            _affinity,
@@ -88,6 +88,7 @@ const char* GCWorkerTask::get_value() {
                total_max_card_pointer_being_walked_through);
       break;
 
+    case GCWorkerTask::TRT:
     case GCWorkerTask::SRT:
       ss.print(", live=%zu, "
                "dead=%zu, "
@@ -95,9 +96,6 @@ const char* GCWorkerTask::get_value() {
                live_objects,
                dead_objects,
                total_objects);
-      break;
-
-    case GCWorkerTask::TRT:
       break;
 
     case GCWorkerTask::BARRIER:
@@ -119,9 +117,10 @@ const char* GCWorkerTask::get_value() {
 }
 
 GCWorkerTracker::GCWorkerTracker(uint id, uint max_gc_worker_tasks):
-  _id(id), _last_idx(0), _is_containing_sr_tasks(false),
-  _elapsed_time(0.0), _task_count(0),
-  _max_gc_worker_tasks(max_gc_worker_tasks), _tasks(NULL) {
+  _id(id), _max_gc_worker_tasks(max_gc_worker_tasks) {
+  _last_idx = 0;
+  _is_containing_sr_tasks = false;
+  _elapsed_time = 0.0;
   // initialize _gc_worker_tasks
   _tasks = NEW_C_HEAP_ARRAY(GCWorkerTask*, _max_gc_worker_tasks, mtGC);
   for (uint i = 0; i < _max_gc_worker_tasks; i += 1) {
@@ -137,7 +136,7 @@ GCWorkerTracker::~GCWorkerTracker() {
                             "is_containing_sr_tasks=%u, "
                             "elapsed_time=%3.7fs]",
                             _id,
-                            _task_count,
+                            _last_idx + 1,
                             _is_containing_sr_tasks,
                             _elapsed_time);
   if (_tasks != NULL) {

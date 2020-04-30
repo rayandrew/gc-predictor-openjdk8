@@ -114,5 +114,10 @@ class ReferenceProcessorStats {
   double phantom_count_elapsed() const {
     return _phantom_count_elapsed;
   }
+
+  double total_elapsed() const {
+    return _soft_count_elapsed + _weak_count_elapsed +
+      _final_count_elapsed + _phantom_count_elapsed;
+  }
 };
 #endif

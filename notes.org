@@ -9,3 +9,7 @@
 - [X] ReferenceProcessor
 - [X] Prune
 - [X] StringTable
+
+* Notes
+** Turns out that old gen is called without executing the young gen if the heap size is small and not sufficient enough
+** Must check into old gen

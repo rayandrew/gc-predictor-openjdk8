@@ -119,9 +119,8 @@ class GCWorkerTracker: public CHeapObj<mtGC> {
 private:
     const uint      _id;
     // float           _idle_time;
-    double          _elapsed_time;
-    uint            _task_count;
     const uint      _max_gc_worker_tasks;
+    double          _elapsed_time;
     GCWorkerTask**  _tasks;
 
     bool            _is_containing_sr_tasks;
@@ -142,7 +141,6 @@ public:
       if (task != NULL) {
         _elapsed_time += task->elapsed;
         task->worker = _id;
-        _task_count++;
         if (!_is_containing_sr_tasks && task->get_type() == GCWorkerTask::SRT) {
           _is_containing_sr_tasks = true;
         }

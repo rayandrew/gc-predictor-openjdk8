@@ -168,7 +168,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
 
   if (gc_worker_tracker != NULL) {
     stringStream sst;
-    sst.print("ScavengeRootsTask%s",
+    sst.print("ScavengeRootsTask(%s)",
               scavenge_root_to_ucare_root_as_string(_root_type));
     GCWorkerTask* gc_worker_task = GCWorkerTask::create(sst.as_string(),
                                                         kind(),
@@ -207,7 +207,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
   GCId gc_id = GCId::current();
   stringStream ss;
   ss.print("ThreadRootsTask: gc_id=%u, worker=%u", gc_id.id(), which);
-  TraceTime t(ss.as_string(), NULL, true, true, true, ucarelog_or_tty, false);
+  TraceTime t(ss.as_string(), NULL, true, false, true, ucarelog_or_tty, false);
 
   PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
 

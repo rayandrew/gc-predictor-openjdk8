@@ -288,6 +288,8 @@ bool PSScavenge::invoke_no_policy() {
     return false;
   }
 
+  ucarelog_or_tty->print_cr("PSScavenge::InvokeNoPolicy Scavenge");
+
   _gc_tracer.report_gc_start(heap->gc_cause(), _gc_timer.gc_start());
   
   bool promotion_failure_occurred = false;
@@ -527,7 +529,8 @@ bool PSScavenge::invoke_no_policy() {
 
       // @rayandrew
       // check time scavenge
-      TraceTime ttz("ReferencesTime", NULL, true, true, true, ucarelog_or_tty);
+      TraceTime ttr("ReferencesTime", NULL, true, true, true, ucarelog_or_tty);
+      double execution_time = 0.0;
 
       reference_processor()->setup_policy(false); // not always_clear
       reference_processor()->set_active_mt_degree(active_workers);
@@ -567,13 +570,20 @@ bool PSScavenge::invoke_no_policy() {
         } else {
           reference_processor()->enqueue_discovered_references(NULL);
         }
+
+        ttz.suspend();
+        execution_time += ttz.seconds();
       }
+
+      ttr.suspend();
+      execution_time += ttr.seconds();
 
       ucarelog_or_tty->print_cr("[References: "
                                 "soft_count=%zu, soft_count_elapsed=%3.7fs, "
                                 "weak_count=%zu, weak_count_elapsed=%3.7fs, "
                                 "final_count=%zu, final_count_elapsed=%3.7fs, "
-                                "final_count=%zu, phantom_count_elapsed=%3.7fs]",
+                                "final_count=%zu, phantom_count_elapsed=%3.7fs, "
+                                "total_process_elapsed=%3.7fs, execution_time=%3.7fs]",
                                 stats.soft_count(),
                                 stats.soft_count_elapsed(),
                                 stats.weak_count(),
@@ -581,7 +591,9 @@ bool PSScavenge::invoke_no_policy() {
                                 stats.final_count(),
                                 stats.final_count_elapsed(),
                                 stats.phantom_count(),
-                                stats.phantom_count_elapsed());
+                                stats.phantom_count_elapsed(),
+                                stats.total_elapsed(),
+                                execution_time);
 
       // @rayandrew
       // add and print counter
