@@ -59,7 +59,7 @@ const char* GCWorkerTask::get_value() {
            "worker=%u, "
            "affinity=%u, "
            "kind=%s, "
-           "elapsed=%3.7fs",
+           "elapsed=%lfs",
            _name,
            worker,
            _affinity,
@@ -135,9 +135,9 @@ GCWorkerTracker::~GCWorkerTracker() {
                             "worker=%u, "
                             "task_count=%u, "
                             "is_containing_sr_tasks=%u, "
-                            "elapsed_time=%3.7fs]",
+                            "elapsed_time=%lfs]",
                             _id,
-                            _last_idx + 1,
+                            _last_idx,
                             _is_containing_sr_tasks,
                             _elapsed_time);
   if (_tasks != NULL) {

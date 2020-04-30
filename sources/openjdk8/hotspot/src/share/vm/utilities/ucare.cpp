@@ -247,7 +247,13 @@ void Ucare::ObjectIterationClosure::do_object(oop obj) {
 
 //// TraceAndCountBoolObjectClosure
 void Ucare::TraceAndCountBoolObjectClosure::print_info(const char* additional_id) {
-  ucarelog_or_tty->print_cr("  %s%s: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", Ucare::get_root_type_as_string(_root_type), additional_id, elapsed_milliseconds(), get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
+  ucarelog_or_tty->print_cr("  %s%s: elapsed=%lfms, dead=%zu, live=%zu, total=%zu",
+                            Ucare::get_root_type_as_string(_root_type),
+                            additional_id,
+                            elapsed_milliseconds(),
+                            get_dead_object_counts(),
+                            get_live_object_counts(),
+                            get_total_object_counts());
 }
 
 //// TraceAndCountRootOopClosure
@@ -264,7 +270,7 @@ void Ucare::TraceAndCountRootOopClosure::print_info(const char* additional_id) {
 
   // ucarelog_or_tty->stamp(PrintGCTimeStamps);
   ucarelog_or_tty->print_cr("[%s%s: "
-                            "elapsed=%3.7fms, "
+                            "elapsed=%lfms, "
                             "dead=%zu, "
                             "live=%zu, "
                             "total=%zu",
@@ -292,7 +298,7 @@ Ucare::TraceAndCountRootOopClosureContainer::~TraceAndCountRootOopClosureContain
       ucarelog_or_tty->stamp(PrintGCTimeStamps);
       ucarelog_or_tty->print_cr("[TraceCountRootOopClosureContainer: context=%s, gc_id=%u, elapsed=%3.7fms, roots_walk_count=%zu, dead_objects=%zu, live_objects=%zu, total_objects=%zu]", _context, _gc_id.id(), _t.elapsed_seconds() * 1000.0, _added_count, get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
     } else {
-      ucarelog_or_tty->print_cr("  summaries: context=%s, gc_id=%u, elapsed=%3.7fms, roots_walk_count=%zu, dead_objects=%zu, live_objects=%zu, total_objects=%zu]", _context, _gc_id.id(), _t.elapsed_seconds() * 1000.0, _added_count, get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
+      ucarelog_or_tty->print_cr("  summaries: context=%s, gc_id=%u, elapsed=%lfms, roots_walk_count=%zu, dead_objects=%zu, live_objects=%zu, total_objects=%zu]", _context, _gc_id.id(), _t.elapsed_seconds() * 1000.0, _added_count, get_dead_object_counts(), get_live_object_counts(), get_total_object_counts());
     }
   }
 }
@@ -335,28 +341,28 @@ void Ucare::count_oops(BoolOopClosure* filter, const GCId& gc_id, const char* ph
     CodeBlobToOopClosure code_blob_closure(&hic, !CodeBlobToOopClosure::FixRelocations);
     CLDToOopClosure cld_to_oop_closure(&hic);
     Threads::oops_do(&hic, &cld_to_oop_closure, &code_blob_closure); // -- strong
-    ucarelog_or_tty->print_cr("  Threads: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
+    ucarelog_or_tty->print_cr("  Threads: elapsed=%lfms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
     oop_container.add_counter(&hic);
   }
   {
     OopIterationClosure hic(filter);
     TraceTimeMixin t;
     ObjectSynchronizer::oops_do(&hic); // -- strong
-    ucarelog_or_tty->print_cr("  ObjectSynchronizer: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
+    ucarelog_or_tty->print_cr("  ObjectSynchronizer: elapsed=%lfms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
     oop_container.add_counter(&hic);
   }
   {
     OopIterationClosure hic(filter);
     TraceTimeMixin t;
     FlatProfiler::oops_do(&hic); // -- strong
-    ucarelog_or_tty->print_cr("  FlatProfiler: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
+    ucarelog_or_tty->print_cr("  FlatProfiler: elapsed=%lfms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
     oop_container.add_counter(&hic);
   }
   {
     OopIterationClosure hic(filter);
     TraceTimeMixin t;
     SystemDictionary::always_strong_oops_do(&hic); // -- strong
-    ucarelog_or_tty->print_cr("  SystemDictionary: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
+    ucarelog_or_tty->print_cr("  SystemDictionary: elapsed=%lfms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
     oop_container.add_counter(&hic);
   }
   {
@@ -364,21 +370,21 @@ void Ucare::count_oops(BoolOopClosure* filter, const GCId& gc_id, const char* ph
     TraceTimeMixin t;
     KlassToOopClosure klass_closure(&hic);
     ClassLoaderDataGraph::always_strong_oops_do(&hic, &klass_closure, false); // -- strong
-    ucarelog_or_tty->print_cr("  ClassLoaderDataGraph: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
+    ucarelog_or_tty->print_cr("  ClassLoaderDataGraph: elapsed=%lfms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
     oop_container.add_counter(&hic);
   }
   {
     OopIterationClosure hic(filter);
     TraceTimeMixin t;
     Management::oops_do(&hic); // -- strong
-    ucarelog_or_tty->print_cr("  Management: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
+    ucarelog_or_tty->print_cr("  Management: elapsed=%lfms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
     oop_container.add_counter(&hic);
   }
   {
     OopIterationClosure hic(filter);
     TraceTimeMixin t;
     JvmtiExport::oops_do(&hic); // -- strong
-    ucarelog_or_tty->print_cr("  JVMTIExport: elapsed=%3.7fms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
+    ucarelog_or_tty->print_cr("  JVMTIExport: elapsed=%lfms, dead=%zu, live=%zu, total=%zu", t.elapsed_milliseconds(), hic.get_dead_object_counts(), hic.get_live_object_counts(), hic.get_total_object_counts());
     oop_container.add_counter(&hic);
   }
   {

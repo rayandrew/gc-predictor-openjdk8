@@ -578,12 +578,13 @@ bool PSScavenge::invoke_no_policy() {
       ttr.suspend();
       execution_time += ttr.seconds();
 
+      ucarelog_or_tty->stamp(PrintGCTimeStamps);
       ucarelog_or_tty->print_cr("[References: "
-                                "soft_count=%zu, soft_count_elapsed=%3.7fs, "
-                                "weak_count=%zu, weak_count_elapsed=%3.7fs, "
-                                "final_count=%zu, final_count_elapsed=%3.7fs, "
-                                "final_count=%zu, phantom_count_elapsed=%3.7fs, "
-                                "total_process_elapsed=%3.7fs, execution_time=%3.7fs]",
+                                "soft_count=%zu, soft_count_elapsed=%lfs, "
+                                "weak_count=%zu, weak_count_elapsed=%lfs, "
+                                "final_count=%zu, final_count_elapsed=%lfs, "
+                                "final_count=%zu, phantom_count_elapsed=%lfs, "
+                                "total_process_elapsed=%lfs, execution_time=%lfs]",
                                 stats.soft_count(),
                                 stats.soft_count_elapsed(),
                                 stats.weak_count(),
