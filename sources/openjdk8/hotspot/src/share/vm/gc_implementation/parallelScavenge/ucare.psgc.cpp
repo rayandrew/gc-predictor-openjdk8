@@ -124,9 +124,9 @@ GCWorkerTracker::GCWorkerTracker(uint id, uint max_gc_worker_tasks):
   // initialize _gc_worker_tasks
   _tasks = NEW_C_HEAP_ARRAY(GCWorkerTask*, _max_gc_worker_tasks, mtGC);
   guarantee(_tasks != NULL, "sanity");
-  for (uint i = 0; i < _max_gc_worker_tasks; i += 1) {
-    _tasks[i] = NULL;
-  }
+  // for (uint i = 0; i < _max_gc_worker_tasks; i += 1) {
+  //   _tasks[i] = NULL;
+  // }
 }
 
 GCWorkerTracker::~GCWorkerTracker() {
@@ -141,7 +141,7 @@ GCWorkerTracker::~GCWorkerTracker() {
                             _is_containing_sr_tasks,
                             _elapsed_time);
   if (_tasks != NULL) {
-    for (uint i = 0; i < _max_gc_worker_tasks; i += 1) {
+    for (uint i = 0; i < _last_idx; i += 1) {
       GCWorkerTask::destroy(_tasks[i]);
     }
     FREE_C_HEAP_ARRAY(GCWorkerTask*, _tasks, mtGC);
