@@ -298,8 +298,13 @@ bool PSScavenge::invoke_no_policy() {
   PSOldGen* old_gen = heap->old_gen();
   PSAdaptiveSizePolicy* size_policy = heap->size_policy();
 
+  // @rayandrew
+  // preparing gc worker
+  gc_task_manager()->initialize_worker_trackers();
+
   // add timer
   TraceTime tt("YoungGenTime", NULL, true, true, true, ucarelog_or_tty);
+
 
   heap->increment_total_collections();
 
@@ -348,7 +353,7 @@ bool PSScavenge::invoke_no_policy() {
     TraceCollectorStats tcs(counters());
     TraceMemoryManagerStats tms(false /* not full GC */,gc_cause);
 
-    TraceTime tracetime("YoungGenGCTime", NULL, true, true, true, ucarelog_or_tty);
+    TraceTime tracetime("YoungGenGCScopeTime", NULL, true, true, true, ucarelog_or_tty);
 
     // @rayandrew
     // add oop container
@@ -452,10 +457,6 @@ bool PSScavenge::invoke_no_policy() {
       GCTraceTime tm("Scavenge", false, false, &_gc_timer, _gc_tracer.gc_id());
 
       // @rayandrew
-      // preparing gc worker
-      gc_task_manager()->initialize_worker_trackers();
-
-      // @rayandrew
       // check time scavenge
       TraceTime ttz("ScavengeTime", NULL, true, true, true, ucarelog_or_tty);
 
@@ -512,10 +513,6 @@ bool PSScavenge::invoke_no_policy() {
       // @rayandrew
       // suspend timer
       // oop_container.suspend();
-
-      // @rayandrew
-      // destroy worker trackers
-      gc_task_manager()->destroy_worker_trackers();
     }
 
     // @rayandrew
@@ -891,6 +888,13 @@ bool PSScavenge::invoke_no_policy() {
   _gc_timer.register_gc_end();
 
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
+
+
+  // @rayandrew
+  // suspend timer
+  tt.suspend();
+  // destroy worker trackers
+  gc_task_manager()->destroy_worker_trackers();
 
   return !promotion_failure_occurred;
 }
