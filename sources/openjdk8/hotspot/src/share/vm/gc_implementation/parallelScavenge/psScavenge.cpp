@@ -348,6 +348,8 @@ bool PSScavenge::invoke_no_policy() {
     TraceCollectorStats tcs(counters());
     TraceMemoryManagerStats tms(false /* not full GC */,gc_cause);
 
+    TraceTime tracetime("YoungGenGCTime", NULL, true, true, true, ucarelog_or_tty);
+
     // @rayandrew
     // add oop container
     // ALWAYS AFTER _gc_tracer!
@@ -850,7 +852,7 @@ bool PSScavenge::invoke_no_policy() {
 
     // @rayandrew
     // reset oop container
-    Ucare::reset_young_gen_oop_container();
+    // Ucare::reset_young_gen_oop_container();
   }
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
