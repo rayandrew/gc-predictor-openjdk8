@@ -369,7 +369,7 @@ bool PSScavenge::invoke_no_policy() {
     uint active_workers;
 
     {
-      TraceTime tracetime("FirstScope", NULL, true, true, true, ucarelog_or_tty);
+      TraceTime tracetime2("FirstScope", NULL, true, true, true, ucarelog_or_tty);
 
       if (TraceGen0Time) accumulated_time()->start();
 
