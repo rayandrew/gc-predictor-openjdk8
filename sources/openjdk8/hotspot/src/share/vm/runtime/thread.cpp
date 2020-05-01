@@ -4192,6 +4192,7 @@ void Threads::possibly_parallel_oops_do(OopClosure* f, CLDClosure* cld_f, CodeBl
 #if INCLUDE_ALL_GCS
 // Used by ParallelScavenge
 void Threads::create_thread_roots_tasks(GCTaskQueue* q) {
+  ucarelog_or_tty->print_cr("Num of threads=%u", Threads::_number_of_threads + 1);
   ALL_JAVA_THREADS(p) {
     q->enqueue(new ThreadRootsTask(p));
   }
