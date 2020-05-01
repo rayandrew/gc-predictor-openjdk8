@@ -361,77 +361,87 @@ bool PSScavenge::invoke_no_policy() {
     // Ucare::TraceAndCountRootOopClosureContainer oop_container(_gc_tracer.gc_id(), "YoungGen");
     // Ucare::set_young_gen_oop_container(&oop_container);
     // oop_container.suspend();
+    //
 
-    if (TraceGen0Time) accumulated_time()->start();
+    size_t old_gen_used_before;
+    size_t young_gen_used_before;
+    HeapWord* old_top;
+    uint active_workers;
 
-    // Let the size policy know we're starting
-    size_policy->minor_collection_begin();
+    {
+      TraceTime tracetime("FirstScope", NULL, true, true, true, ucarelog_or_tty);
 
-    // Verify the object start arrays.
-    if (VerifyObjectStartArray &&
-        VerifyBeforeGC) {
-      old_gen->verify_object_start_array();
+      if (TraceGen0Time) accumulated_time()->start();
+
+      // Let the size policy know we're starting
+      size_policy->minor_collection_begin();
+
+      // Verify the object start arrays.
+      if (VerifyObjectStartArray &&
+          VerifyBeforeGC) {
+        old_gen->verify_object_start_array();
+      }
+
+      // Verify no unmarked old->young roots
+      if (VerifyRememberedSets) {
+        CardTableExtension::verify_all_young_refs_imprecise();
+      }
+
+      if (!ScavengeWithObjectsInToSpace) {
+        assert(young_gen->to_space()->is_empty(),
+               "Attempt to scavenge with live objects in to_space");
+        young_gen->to_space()->clear(SpaceDecorator::Mangle);
+      } else if (ZapUnusedHeapArea) {
+        young_gen->to_space()->mangle_unused_area();
+      }
+      save_to_space_top_before_gc();
+
+      COMPILER2_PRESENT(DerivedPointerTable::clear());
+
+      reference_processor()->enable_discovery(true /*verify_disabled*/, true /*verify_no_refs*/);
+      reference_processor()->setup_policy(false);
+
+      // We track how much was promoted to the next generation for
+      // the AdaptiveSizePolicy.
+      old_gen_used_before = old_gen->used_in_bytes();
+
+      // For PrintGCDetails
+      young_gen_used_before = young_gen->used_in_bytes();
+
+      // @rayandrew
+      // print heap used size
+      // add used capacity etc
+      ucarelog_or_tty->stamp(PrintGCTimeStamps);
+      ucarelog_or_tty->print_cr("[YoungGen size, capacity=%zuB used=%zuB free=%zuB]",
+                                young_gen->capacity_in_bytes(),
+                                young_gen->used_in_bytes(),
+                                young_gen->free_in_bytes());
+      ucarelog_or_tty->stamp(PrintGCTimeStamps);
+      ucarelog_or_tty->print_cr("[OldGen size, capacity=%zuB used=%zuB free=%zuB]",
+                                old_gen->capacity_in_bytes(),
+                                old_gen->used_in_bytes(),
+                                old_gen->free_in_bytes());
+
+      // Reset our survivor overflow.
+      set_survivor_overflow(false);
+
+      // We need to save the old top values before
+      // creating the promotion_manager. We pass the top
+      // values to the card_table, to prevent it from
+      // straying into the promotion labs.
+      old_top = old_gen->object_space()->top();
+
+      // Release all previously held resources
+      gc_task_manager()->release_all_resources();
+
+      // Set the number of GC threads to be used in this collection
+      gc_task_manager()->set_active_gang();
+      gc_task_manager()->task_idle_workers();
+      // Get the active number of workers here and use that value
+      // throughout the methods.
+      active_workers = gc_task_manager()->active_workers();
+      heap->set_par_threads(active_workers);
     }
-
-    // Verify no unmarked old->young roots
-    if (VerifyRememberedSets) {
-      CardTableExtension::verify_all_young_refs_imprecise();
-    }
-
-    if (!ScavengeWithObjectsInToSpace) {
-      assert(young_gen->to_space()->is_empty(),
-             "Attempt to scavenge with live objects in to_space");
-      young_gen->to_space()->clear(SpaceDecorator::Mangle);
-    } else if (ZapUnusedHeapArea) {
-      young_gen->to_space()->mangle_unused_area();
-    }
-    save_to_space_top_before_gc();
-
-    COMPILER2_PRESENT(DerivedPointerTable::clear());
-
-    reference_processor()->enable_discovery(true /*verify_disabled*/, true /*verify_no_refs*/);
-    reference_processor()->setup_policy(false);
-
-    // We track how much was promoted to the next generation for
-    // the AdaptiveSizePolicy.
-    size_t old_gen_used_before = old_gen->used_in_bytes();
-
-    // For PrintGCDetails
-    size_t young_gen_used_before = young_gen->used_in_bytes();
-
-    // @rayandrew
-    // print heap used size
-    // add used capacity etc
-    ucarelog_or_tty->stamp(PrintGCTimeStamps);
-    ucarelog_or_tty->print_cr("[YoungGen size, capacity=%zuB used=%zuB free=%zuB]",
-                              young_gen->capacity_in_bytes(),
-                              young_gen->used_in_bytes(),
-                              young_gen->free_in_bytes());
-    ucarelog_or_tty->stamp(PrintGCTimeStamps);
-    ucarelog_or_tty->print_cr("[OldGen size, capacity=%zuB used=%zuB free=%zuB]",
-                              old_gen->capacity_in_bytes(),
-                              old_gen->used_in_bytes(),
-                              old_gen->free_in_bytes());
-
-    // Reset our survivor overflow.
-    set_survivor_overflow(false);
-
-    // We need to save the old top values before
-    // creating the promotion_manager. We pass the top
-    // values to the card_table, to prevent it from
-    // straying into the promotion labs.
-    HeapWord* old_top = old_gen->object_space()->top();
-
-    // Release all previously held resources
-    gc_task_manager()->release_all_resources();
-
-    // Set the number of GC threads to be used in this collection
-    gc_task_manager()->set_active_gang();
-    gc_task_manager()->task_idle_workers();
-    // Get the active number of workers here and use that value
-    // throughout the methods.
-    uint active_workers = gc_task_manager()->active_workers();
-    heap->set_par_threads(active_workers);
 
     // @rayandrew
     // output parallel workers
@@ -615,7 +625,7 @@ bool PSScavenge::invoke_no_policy() {
       // Unlink any dead interned Strings and process the remaining live ones.
       PSScavengeRootsClosure root_closure(promotion_manager);
 
-      // StringTable::unlink_or_oops_do(&_is_alive_closure, &root_closure);
+      StringTable::unlink_or_oops_do(&_is_alive_closure, &root_closure);
 
       // @rayandrew
       // suspend timer
@@ -623,9 +633,9 @@ bool PSScavenge::invoke_no_policy() {
 
       // @rayandrew
       // add counter
-      Ucare::PSIsAliveClosure is_alive_closure;
-      is_alive_closure.set_root_type(Ucare::string_table);
-      StringTable::unlink_or_oops_do(&is_alive_closure, &root_closure);
+      // Ucare::PSIsAliveClosure is_alive_closure;
+      // is_alive_closure.set_root_type(Ucare::string_table);
+      // StringTable::unlink_or_oops_do(&is_alive_closure, &root_closure);
       // is_alive_closure.print_info();
       // Ucare::get_young_gen_oop_container()->add_counter(&is_alive_closure);
 
