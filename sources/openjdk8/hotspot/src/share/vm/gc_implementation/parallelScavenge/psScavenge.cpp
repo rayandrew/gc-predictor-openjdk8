@@ -818,36 +818,40 @@ bool PSScavenge::invoke_no_policy() {
       CodeCache::prune_scavenge_root_nmethods();
     }
 
-    // Re-verify object start arrays
-    if (VerifyObjectStartArray &&
-        VerifyAfterGC) {
-      old_gen->verify_object_start_array();
-    }
+    {
+      TraceTime tt("OtherStuff", NULL, true, true, true, ucarelog_or_tty);
 
-    // Verify all old -> young cards are now precise
-    if (VerifyRememberedSets) {
-      // Precise verification will give false positives. Until this is fixed,
-      // use imprecise verification.
-      // CardTableExtension::verify_all_young_refs_precise();
-      CardTableExtension::verify_all_young_refs_imprecise();
-    }
-
-    if (TraceGen0Time) accumulated_time()->stop();
-
-    if (PrintGC) {
-      if (PrintGCDetails) {
-        // Don't print a GC timestamp here.  This is after the GC so
-        // would be confusing.
-        young_gen->print_used_change(young_gen_used_before);
+      // Re-verify object start arrays
+      if (VerifyObjectStartArray &&
+          VerifyAfterGC) {
+        old_gen->verify_object_start_array();
       }
-      heap->print_heap_change(prev_used);
+
+      // Verify all old -> young cards are now precise
+      if (VerifyRememberedSets) {
+        // Precise verification will give false positives. Until this is fixed,
+        // use imprecise verification.
+        // CardTableExtension::verify_all_young_refs_precise();
+        CardTableExtension::verify_all_young_refs_imprecise();
+      }
+
+      if (TraceGen0Time) accumulated_time()->stop();
+
+      if (PrintGC) {
+        if (PrintGCDetails) {
+          // Don't print a GC timestamp here.  This is after the GC so
+          // would be confusing.
+          young_gen->print_used_change(young_gen_used_before);
+        }
+        heap->print_heap_change(prev_used);
+      }
+
+      // Track memory usage and detect low memory
+      MemoryService::track_memory_usage();
+      heap->update_counters();
+
+      gc_task_manager()->release_idle_workers();
     }
-
-    // Track memory usage and detect low memory
-    MemoryService::track_memory_usage();
-    heap->update_counters();
-
-    gc_task_manager()->release_idle_workers();
 
 
     // @rayandrew
