@@ -127,7 +127,7 @@ private:
     uint            _last_idx;
 
 public:
-    static GCWorkerTracker* create(uint id, uint max_gc_worker_tasks = 30) {
+    static GCWorkerTracker* create(uint id, uint max_gc_worker_tasks = 50) {
       return new GCWorkerTracker(id, max_gc_worker_tasks);
     }
 

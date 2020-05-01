@@ -1148,8 +1148,6 @@ void WaitForBarrierGCTask::do_it(GCTaskManager* manager, uint which) {
   // add tracker
   GCWorkerTracker* gc_worker_tracker = manager->worker_tracker(which);
 
-  ucarelog_or_tty->print_cr("Barrier worker=%u tracker=%d", which, gc_worker_tracker != NULL);
-
   if (gc_worker_tracker != NULL) {
     GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
                                                         kind(),
