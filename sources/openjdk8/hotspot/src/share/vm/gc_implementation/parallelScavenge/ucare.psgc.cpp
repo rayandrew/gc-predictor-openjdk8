@@ -49,73 +49,103 @@ GCWorkerTask::GCWorkerTask(
 }
 
 GCWorkerTask::~GCWorkerTask() {
-  // noop
-  ucarelog_or_tty->print_cr("[%s: %s]", type_to_string(), get_value());
-  ucarelog_or_tty->flush();
-}
-
-const char* GCWorkerTask::get_value() {
-  stringStream ss;
-  ss.print("name=%s, "
-           "worker=%u, "
-           "affinity=%u, "
-           "kind=%s, "
-           "elapsed=%lfs",
-           _name,
-           worker,
-           _affinity,
-           GCTask::Kind::to_string(_kind),
-           elapsed);
-
   switch(_type) {
     case GCWorkerTask::OTYRT:
-      ss.print(", stripe_num=%u, "
-               "stripe_total=%u, "
-               // "ssize=%d, "
-               "slice_width=%zu, "
-               "slice_counter=%zu, "
-               "dirty_card_counter=%zu, "
-               "objects_scanned_counter=%zu, "
-               "card_increment_counter=%zu, "
-               "total_max_card_pointer_being_walked_through=%zu",
-               stripe_num,
-               stripe_total,
-               // ssize,
-               slice_width,
-               slice_counter,
-               dirty_card_counter,
-               objects_scanned_counter,
-               card_increment_counter,
-               total_max_card_pointer_being_walked_through);
+      ucarelog_or_tty->print_cr("[%s: "
+                                "name=%s, "
+                                "worker=%u, "
+                                "affinity=%u, "
+                                "kind=%s, "
+                                "elapsed=%lfs, "
+                                "stripe_num=%u, "
+                                "stripe_total=%u, "
+                                // "ssize=%d, "
+                                "slice_width=%zu, "
+                                "slice_counter=%zu, "
+                                "dirty_card_counter=%zu, "
+                                "objects_scanned_counter=%zu, "
+                                "card_increment_counter=%zu, "
+                                "total_max_card_pointer_being_walked_through=%zu]",
+                                type_to_string(),
+                                _name,
+                                worker,
+                                _affinity,
+                                GCTask::Kind::to_string(_kind),
+                                elapsed,
+                                stripe_num,
+                                stripe_total,
+                                // ssize,
+                                slice_width,
+                                slice_counter,
+                                dirty_card_counter,
+                                objects_scanned_counter,
+                                card_increment_counter,
+                                total_max_card_pointer_being_walked_through);
       break;
 
     case GCWorkerTask::TRT:
     case GCWorkerTask::SRT:
-      ss.print(", live=%zu, "
-               "dead=%zu, "
-               "total=%zu",
-               live_objects,
-               dead_objects,
-               total_objects);
+      ucarelog_or_tty->print_cr("[%s: "
+                                "name=%s, "
+                                "worker=%u, "
+                                "affinity=%u, "
+                                "kind=%s, "
+                                "elapsed=%lfs, "
+                                "live=%zu, "
+                                "dead=%zu, "
+                                "total=%zu]",
+                                type_to_string(),
+                                _name,
+                                worker,
+                                _affinity,
+                                GCTask::Kind::to_string(_kind),
+                                elapsed,
+                                live_objects,
+                                dead_objects,
+                                total_objects);
       break;
 
     case GCWorkerTask::BARRIER:
-      ss.print(", busy_workers=%u",
-               busy_workers);
+      ucarelog_or_tty->print_cr("[%s: "
+                                "name=%s, "
+                                "worker=%u, "
+                                "affinity=%u, "
+                                "kind=%s, "
+                                "elapsed=%lfs, "
+                                "busy_workers=%u]",
+                                type_to_string(),
+                                _name,
+                                worker,
+                                _affinity,
+                                GCTask::Kind::to_string(_kind),
+                                elapsed,
+                                busy_workers);
       break;
 
     case GCWorkerTask::STEAL:
-      ss.print(", stack_depth_counter=%zu",
-               stack_depth_counter);
+      ucarelog_or_tty->print_cr("[%s: "
+                                "name=%s, "
+                                "worker=%u, "
+                                "affinity=%u, "
+                                "kind=%s, "
+                                "elapsed=%lfs, "
+                                "stack_depth_counter=%zu]",
+                                type_to_string(),
+                                _name,
+                                worker,
+                                _affinity,
+                                GCTask::Kind::to_string(_kind),
+                                elapsed,
+                                stack_depth_counter);
       break;
 
-    case GCWorkerTask::NOOP:
-    case GCWorkerTask::IDLE:
-      break;
+    // case GCWorkerTask::NOOP:
+    // case GCWorkerTask::IDLE:
+    //   break;
   }
-
-  return ss.as_string();
+  ucarelog_or_tty->flush();
 }
+
 
 GCWorkerTracker::GCWorkerTracker(uint id, uint max_gc_worker_tasks):
   _id(id), _max_gc_worker_tasks(max_gc_worker_tasks) {

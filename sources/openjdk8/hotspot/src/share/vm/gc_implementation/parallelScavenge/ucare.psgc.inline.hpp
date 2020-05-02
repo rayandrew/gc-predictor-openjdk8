@@ -93,7 +93,7 @@ public:
     size_t                   stack_depth_counter;
 
 public:
-    virtual const char* get_value();
+    // virtual const char* get_value();
 
     inline const char* get_name() const { return _name; }
     inline const GCTask::Kind::kind get_kind() const { return _kind; }
