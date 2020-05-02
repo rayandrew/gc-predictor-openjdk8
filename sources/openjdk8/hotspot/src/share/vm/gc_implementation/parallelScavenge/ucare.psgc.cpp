@@ -84,6 +84,26 @@ GCWorkerTask::~GCWorkerTask() {
       break;
 
     case GCWorkerTask::TRT:
+      ucarelog_or_tty->print_cr("[%s: "
+                                "name=%s, "
+                                "worker=%u, "
+                                "affinity=%u, "
+                                "kind=%s, "
+                                "elapsed=%lfs, "
+                                "live=%zu, "
+                                "dead=%zu, "
+                                "total=%zu]",
+                                type_to_string(),
+                                _name,
+                                worker,
+                                _affinity,
+                                GCTask::Kind::to_string(_kind),
+                                elapsed,
+                                live_objects,
+                                dead_objects,
+                                total_objects);
+      break;
+
     case GCWorkerTask::SRT:
       ucarelog_or_tty->print_cr("[%s: "
                                 "name=%s, "

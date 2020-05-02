@@ -161,16 +161,13 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
   // @rayandrew
   // print info
   t.suspend();
-  ss.reset();
-  ss.print("(gc_id=%u, worker=%u)", gc_id.id(), which);
+  // ss.reset();
+  // ss.print("(gc_id=%u, worker=%u)", gc_id.id(), which);
 
   GCWorkerTracker* gc_worker_tracker = manager->worker_tracker(which);
 
   if (gc_worker_tracker != NULL) {
-    stringStream sst;
-    sst.print("ScavengeRootsTask(%s)",
-              scavenge_root_to_ucare_root_as_string(_root_type));
-    GCWorkerTask* gc_worker_task = GCWorkerTask::create(sst.as_string(),
+    GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
                                                         kind(),
                                                         affinity(),
                                                         GCWorkerTask::SRT);
