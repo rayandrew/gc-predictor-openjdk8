@@ -51,6 +51,7 @@ GCWorkerTask::GCWorkerTask(
 GCWorkerTask::~GCWorkerTask() {
   // noop
   ucarelog_or_tty->print_cr("[%s: %s]", type_to_string(), get_value());
+  ucarelog_or_tty->flush();
 }
 
 const char* GCWorkerTask::get_value() {
