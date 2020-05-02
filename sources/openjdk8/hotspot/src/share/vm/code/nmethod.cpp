@@ -49,8 +49,8 @@
 
 // @rayandrew
 // include timer
-// #include "utilities/ostream.hpp"
-// #include "utilities/timer.hpp"
+#include "utilities/ostream.hpp"
+#include "runtime/timer.hpp"
 
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
