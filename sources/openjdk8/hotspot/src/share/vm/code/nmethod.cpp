@@ -2269,15 +2269,15 @@ void nmethod::oops_do_marking_prologue() {
 
   // @rayandrew
   // add timer
-  // TraceTime t("nmethod::oops_do_marking_prologue", NULL, true, false, true, ucarelog_or_tty);
+  TraceTime t("nmethod::oops_do_marking_prologue", NULL, true, false, true, ucarelog_or_tty);
 
   // We use cmpxchg_ptr instead of regular assignment here because the user
   // may fork a bunch of threads, and we need them all to see the same state.
   void* observed = Atomic::cmpxchg_ptr(NMETHOD_SENTINEL, &_oops_do_mark_nmethods, NULL);
   guarantee(observed == NULL, "no races in this sequential code");
 
-  // t.suspend();
-  // ucarelog_or_tty->print_cr("nmethod_prologue: elapsed=%lfs, count=%1", t.seconds());
+  t.suspend();
+  ucarelog_or_tty->print_cr("nmethod_prologue: elapsed=%lfs, count=%1", t.seconds());
 }
 
 void nmethod::oops_do_marking_epilogue() {
@@ -2285,12 +2285,12 @@ void nmethod::oops_do_marking_epilogue() {
 
   // @rayandrew
   // add timer
-  // TraceTime t("nmethod::oops_do_marking_epilogue", NULL, true, false, true, ucarelog_or_tty);
-  // size_t counter = 0;
+  TraceTime t("nmethod::oops_do_marking_epilogue", NULL, true, false, true, ucarelog_or_tty);
+  size_t counter = 0;
 
   nmethod* cur = _oops_do_mark_nmethods;
   while (cur != NMETHOD_SENTINEL) {
-    // counter++;
+    counter++;
     assert(cur != NULL, "not NULL-terminated");
     nmethod* next = cur->_oops_do_mark_link;
     cur->_oops_do_mark_link = NULL;
@@ -2303,8 +2303,8 @@ void nmethod::oops_do_marking_epilogue() {
   guarantee(observed == required, "no races in this sequential code");
   NOT_PRODUCT(if (TraceScavenge)  tty->print_cr("oops_do_marking_epilogue]"));
 
-  // t.suspend();
-  // ucarelog_or_tty->print_cr("nmethod_epilogue: elapsed=%lfs, count=%zu", t.seconds(), counter);
+  t.suspend();
+  ucarelog_or_tty->print_cr("nmethod_epilogue: elapsed=%lfs, count=%zu", t.seconds(), counter);
 }
 
 class DetectScavengeRoot: public OopClosure {
