@@ -148,6 +148,7 @@ GCWorkerTracker::~GCWorkerTracker() {
     _tasks = NULL;
   }
   ucarelog_or_tty->print_cr("[WorkerTracker: worker=%u end]", _id);
+  ucarelog_or_tty->flush();
 }
 
 Ucare::RootType scavenge_root_to_ucare_root(ScavengeRootsTask::RootType type) {
