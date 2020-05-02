@@ -47,6 +47,11 @@
 #include "shark/sharkCompiler.hpp"
 #endif
 
+// @rayandrew
+// include timer
+#include "utilities/ostream.hpp"
+#include "utilities/timer.hpp"
+
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 unsigned char nmethod::_global_unloading_clock = 0;
@@ -2261,16 +2266,31 @@ bool nmethod::test_set_oops_do_mark() {
 void nmethod::oops_do_marking_prologue() {
   NOT_PRODUCT(if (TraceScavenge)  tty->print_cr("[oops_do_marking_prologue"));
   assert(_oops_do_mark_nmethods == NULL, "must not call oops_do_marking_prologue twice in a row");
+
+  // @rayandrew
+  // add timer
+  TraceTime t("nmethod::oops_do_marking_prologue", NULL, true, false, true, ucarelog_or_tty);
+
   // We use cmpxchg_ptr instead of regular assignment here because the user
   // may fork a bunch of threads, and we need them all to see the same state.
   void* observed = Atomic::cmpxchg_ptr(NMETHOD_SENTINEL, &_oops_do_mark_nmethods, NULL);
   guarantee(observed == NULL, "no races in this sequential code");
+
+  t.suspend();
+  ucarelog_or_tty->print_cr("nmethod_prologue: elapsed=%lfs, count=%u", t.seconds(), 1);
 }
 
 void nmethod::oops_do_marking_epilogue() {
   assert(_oops_do_mark_nmethods != NULL, "must not call oops_do_marking_epilogue twice in a row");
+
+  // @rayandrew
+  // add timer
+  TraceTime t("nmethod::oops_do_marking_epilogue", NULL, true, false, true, ucarelog_or_tty);
+  size_t counter = 0;
+
   nmethod* cur = _oops_do_mark_nmethods;
   while (cur != NMETHOD_SENTINEL) {
+    counter++:
     assert(cur != NULL, "not NULL-terminated");
     nmethod* next = cur->_oops_do_mark_link;
     cur->_oops_do_mark_link = NULL;
@@ -2282,6 +2302,9 @@ void nmethod::oops_do_marking_epilogue() {
   void* observed = Atomic::cmpxchg_ptr(NULL, &_oops_do_mark_nmethods, required);
   guarantee(observed == required, "no races in this sequential code");
   NOT_PRODUCT(if (TraceScavenge)  tty->print_cr("oops_do_marking_epilogue]"));
+
+  t.suspend();
+  ucarelog_or_tty->print_cr("nmethod_epilogue: elapsed=%lfs, count=%zu", t.seconds(), counter);
 }
 
 class DetectScavengeRoot: public OopClosure {
