@@ -2290,7 +2290,7 @@ void nmethod::oops_do_marking_epilogue() {
 
   nmethod* cur = _oops_do_mark_nmethods;
   while (cur != NMETHOD_SENTINEL) {
-    counter++:
+    counter++;
     assert(cur != NULL, "not NULL-terminated");
     nmethod* next = cur->_oops_do_mark_link;
     cur->_oops_do_mark_link = NULL;
