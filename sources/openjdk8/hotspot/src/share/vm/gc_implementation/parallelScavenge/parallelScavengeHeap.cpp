@@ -594,7 +594,7 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
       }
     }
 
-    t.suspend();
+    tt.suspend();
     ucarelog_or_tty->stamp(PrintGCTimeStamps);
     ucarelog_or_tty->print_cr("[%s, %lf secs]", ss.as_string(), t.seconds());
   }
