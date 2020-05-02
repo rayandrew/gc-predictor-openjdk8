@@ -2277,7 +2277,7 @@ void nmethod::oops_do_marking_prologue() {
   guarantee(observed == NULL, "no races in this sequential code");
 
   t.suspend();
-  ucarelog_or_tty->print_cr("nmethod_prologue: elapsed=%lfs, count=%1", t.seconds());
+  ucarelog_or_tty->print_cr("nmethod_prologue: elapsed=%lfs, count=1", t.seconds());
 }
 
 void nmethod::oops_do_marking_epilogue() {
