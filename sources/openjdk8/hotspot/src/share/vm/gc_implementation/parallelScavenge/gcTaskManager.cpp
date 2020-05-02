@@ -1110,7 +1110,7 @@ void WaitForBarrierGCTask::destruct() {
 void WaitForBarrierGCTask::do_it(GCTaskManager* manager, uint which) {
   // @rayandrew
   // add tracetime
-  TraceTime t("WaitForBarrierGCTask", NULL, true, true, true, ucarelog_or_tty, false);
+  TraceTime t("WaitForBarrierGCTask", NULL, true, false, true, ucarelog_or_tty, false);
 
   uint busy_workers_count = manager->busy_workers();
 

@@ -2277,7 +2277,8 @@ void nmethod::oops_do_marking_prologue() {
   guarantee(observed == NULL, "no races in this sequential code");
 
   t.suspend();
-  ucarelog_or_tty->print_cr("nmethod_prologue: elapsed=%lfs, count=1", t.seconds());
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[nmethod_prologue: elapsed=%lfs, count=1]", t.seconds());
 }
 
 void nmethod::oops_do_marking_epilogue() {
@@ -2304,7 +2305,8 @@ void nmethod::oops_do_marking_epilogue() {
   NOT_PRODUCT(if (TraceScavenge)  tty->print_cr("oops_do_marking_epilogue]"));
 
   t.suspend();
-  ucarelog_or_tty->print_cr("nmethod_epilogue: elapsed=%lfs, count=%zu", t.seconds(), counter);
+  ucarelog_or_tty->stamp(PrintGCTimeStamps);
+  ucarelog_or_tty->print_cr("[nmethod_epilogue: elapsed=%lfs, count=%zu]", t.seconds(), counter);
 }
 
 class DetectScavengeRoot: public OopClosure {
