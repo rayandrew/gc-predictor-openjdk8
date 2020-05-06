@@ -75,7 +75,6 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
            scavenge_root_to_ucare_root_as_string(_root_type));
   TraceTime t(ss.as_string(), NULL, true, false, true, ucarelog_or_tty, false);
 
-
   switch (_root_type) {
     case universe:
       roots_closure.set_root_type(Ucare::universe);
@@ -155,8 +154,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
   }
 
   // Do the real work
-  pm->drain_stacks(false);
-
+  size_t counter = pm->drain_stacks(false);
 
   // @rayandrew
   // print info
@@ -188,7 +186,8 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
       gc_worker_task->total_objects = roots_closure.get_total_object_counts();
     }
 
-     manager->worker_tracker(which)->add_task(gc_worker_task);
+    gc_worker_task->stack_depth_counter = counter;
+    manager->worker_tracker(which)->add_task(gc_worker_task);
   }
 }
 
@@ -231,7 +230,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
   // roots_closure.print_info(ss.as_string());
 
   // Do the real work
-  pm->drain_stacks(false);
+  size_t counter = pm->drain_stacks(false);
 
   // @rayandrew
   // gc worker tracker
@@ -248,6 +247,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
     gc_worker_task->live_objects = roots_closure.get_live_object_counts();
     gc_worker_task->dead_objects = roots_closure.get_dead_object_counts();
     gc_worker_task->total_objects = roots_closure.get_total_object_counts();
+    gc_worker_task->stack_depth_counter = counter;
     manager->worker_tracker(which)->add_task(gc_worker_task);
   }
 }
@@ -337,9 +337,9 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
   {
     // @rayandrew
     // add logger
-    stringStream ss;
-    ss.print("OldToYoungRootsTaskTime: gc_id=%u, worker=%u", GCId::current().id(), which);
-    TraceTime t(ss.as_string(), NULL, true, true, true, ucarelog_or_tty, false);
+    // stringStream ss;
+    // ss.print("OldToYoungRootsTaskTime: gc_id=%u, worker=%u", GCId::current().id(), which);
+    TraceTime t("OldToYoungRootsTask", NULL, true, false, true, ucarelog_or_tty, false);
 
     PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
 
@@ -347,22 +347,42 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
     CardTableExtension* card_table = (CardTableExtension *)Universe::heap()->barrier_set();
     // FIX ME! Assert that card_table is the type we believe it to be.
 
-    card_table->scavenge_contents_parallel(_gen->start_array(),
-                                           _gen->object_space(),
-                                           _gen_top,
-                                           pm,
-                                           _stripe_number,
-                                           _stripe_total,
+    size_t card_increment_counter =
+      card_table->scavenge_contents_parallel(_gen->start_array(),
+                                             _gen->object_space(),
+                                             _gen_top,
+                                             pm,
+                                             _stripe_number,
+                                             _stripe_total,
 
-                                           // @rayandrew
-                                           // add this for logging purpose
-                                           name(),
-                                           kind(),
-                                           affinity(),
-                                           manager,
-                                           which);
+                                             // @rayandrew
+                                             // add this for logging purpose
+                                             name(),
+                                             kind(),
+                                             affinity(),
+                                             manager,
+                                             which);
 
     // Do the real work
-    pm->drain_stacks(false);
+    size_t counter = pm->drain_stacks(false);
+    // ucarelog_or_tty->print_cr("[OTYRT: worker=%u, stack_depth_counter=%zu]",
+    //                           which,
+    //                           counter);
+
+    // @rayandrew
+    // gc worker tracker
+    GCWorkerTracker* gc_worker_tracker = manager->worker_tracker(which);
+    if (gc_worker_tracker != NULL) {
+      GCWorkerTask* gc_worker_task = GCWorkerTask::create(name(),
+                                                          kind(),
+                                                          affinity(),
+                                                          GCWorkerTask::OTYRT);
+
+      assert(gc_worker_task != NULL, "sanity");
+      gc_worker_task->elapsed = t.seconds();
+      gc_worker_task->card_increment_counter = card_increment_counter;
+      gc_worker_task->stack_depth_counter = counter;
+      manager->worker_tracker(which)->add_task(gc_worker_task);
+    }
   }
 }

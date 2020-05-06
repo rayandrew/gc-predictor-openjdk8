@@ -61,21 +61,23 @@ class CardTableExtension : public CardTableModRefBS {
   // Too risky for the 4/10/02 putback
   // BarrierSet::Name kind() { return BarrierSet::CardTableExtension; }
 
+  // @rayandrew
+  // change this to return size_t
   // Scavenge support
-  void scavenge_contents_parallel(ObjectStartArray* start_array,
-                                  MutableSpace* sp,
-                                  HeapWord* space_top,
-                                  PSPromotionManager* pm,
-                                  uint stripe_number,
-                                  uint stripe_total,
+  size_t scavenge_contents_parallel(ObjectStartArray* start_array,
+                                    MutableSpace* sp,
+                                    HeapWord* space_top,
+                                    PSPromotionManager* pm,
+                                    uint stripe_number,
+                                    uint stripe_total,
 
-                                  // @rayandrew
-                                  // added this for logging purpose
-                                  const char* name,
-                                  GCTask::Kind::kind kind,
-                                  uint affinity,
-                                  GCTaskManager* manager,
-                                  uint which);
+                                    // @rayandrew
+                                    // added this for logging purpose
+                                    const char* name,
+                                    GCTask::Kind::kind kind,
+                                    uint affinity,
+                                    GCTaskManager* manager,
+                                    uint which);
 
   // Verification
   static void verify_all_young_refs_imprecise();
