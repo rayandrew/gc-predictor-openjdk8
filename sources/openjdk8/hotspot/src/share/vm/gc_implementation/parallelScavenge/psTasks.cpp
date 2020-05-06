@@ -74,7 +74,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
   //          which,
   //          scavenge_root_to_ucare_root_as_string(_root_type));
   // TraceTime t(ss.as_string(), NULL, true, false, true, ucarelog_or_tty, false);
-  TraceTime t("ScavengeRootsTask");
+  TraceTime t("ScavengeRootsTask", NULL, true, false);
 
   switch (_root_type) {
     case universe:
@@ -205,7 +205,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
   // stringStream ss;
   // ss.print("ThreadRootsTask: gc_id=%u, worker=%u", gc_id.id(), which);
   // TraceTime t(ss.as_string(), NULL, true, false, true, ucarelog_or_tty, false);
-  TraceTime t("ThreadRootsTask");
+  TraceTime t("ThreadRootsTask", NULL, true, false);
 
   PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
 
@@ -269,7 +269,7 @@ void StealTask::do_it(GCTaskManager* manager, uint which) {
   // GCId gc_id = GCId::current();
   // stringStream ss;
   // ss.print("StealTask: gc_id=%u, worker=%u", gc_id.id(), which);
-  TraceTime t("StealTask");
+  TraceTime t("StealTask", NULL, true, false);
 
   PSPromotionManager* pm =
     PSPromotionManager::gc_thread_promotion_manager(which);
@@ -341,7 +341,7 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
     // add logger
     // stringStream ss;
     // ss.print("OldToYoungRootsTaskTime: gc_id=%u, worker=%u", GCId::current().id(), which);
-    TraceTime t("OldToYoungRootsTask");
+    TraceTime t("OldToYoungRootsTask", NULL, true, false);
 
     PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
 
