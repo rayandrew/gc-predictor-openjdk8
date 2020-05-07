@@ -635,7 +635,7 @@ void GCTaskManager::destroy_worker_trackers() {
 
 void GCTaskManager::set_worker_tracker(uint which, GCWorkerTracker* value) {
   assert(which < workers(), "index out of bounds");
-  assert(value != NULL, "shouldn't have null thread worker");
+  // assert(value != NULL, "shouldn't have null thread worker");
   _worker_trackers[which] = value;
 }
 

@@ -254,8 +254,7 @@ function build_new()
         --with-cacerts-file=$OBF_DROP_DIR/cacerts \
         --with-ccache-dir=$OBF_WORKSPACE_PATH/.ccache \
         -with-build-number=$OBF_BUILD_DATE \
-        --with-milestone=$OBF_MILESTONE \
-        --with-extra-cxxflags="-DTRACESPINNING -DTASKQUEUE_STATS=1" $EXTRA_FLAGS
+        --with-milestone=$OBF_MILESTONE $EXTRA_FLAGS
 
   fi
 
