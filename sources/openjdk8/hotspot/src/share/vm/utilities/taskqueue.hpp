@@ -33,11 +33,18 @@
 
 // Simple TaskQueue stats that are collected by default in debug builds.
 
-#if !defined(TASKQUEUE_STATS) && defined(ASSERT)
+// @rayandrew
+// uncomment this in production
+// #if !defined(TASKQUEUE_STATS) && defined(ASSERT)
+// #define TASKQUEUE_STATS 1
+// #elif !defined(TASKQUEUE_STATS)
+// #define TASKQUEUE_STATS 0
+// #endif
+
+// @rayandrew
+// delete this in production
 #define TASKQUEUE_STATS 1
-#elif !defined(TASKQUEUE_STATS)
-#define TASKQUEUE_STATS 0
-#endif
+#define TRACESPINNING
 
 #if TASKQUEUE_STATS
 #define TASKQUEUE_STATS_ONLY(code) code
@@ -594,7 +601,9 @@ public:
 // A class to aid in the termination of a set of parallel tasks using
 // TaskQueueSet's for work stealing.
 
-#undef TRACESPINNING
+// @rayandrew
+// uncomment this!
+// #undef TRACESPINNING
 
 class ParallelTaskTerminator: public StackObj {
 private:
