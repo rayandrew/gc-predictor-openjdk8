@@ -13,3 +13,82 @@
 * Notes
 ** Turns out that old gen is called without executing the young gen if the heap size is small and not sufficient enough
 ** Must check into old gen
+
+* Caveats
+** StealTask elapsed is linear with gc time
+*** drain_stacks_depth (drain own PSPromotionManager stacks)
+*** Loop (true until termination)
+**** steal_depth
+***** stack_array_depth
+****** steal
+******* steal_best_of_2
+**** process_popped_location_depth
+***** if masked
+****** process_array_chunk (this happens if array is ObjectArray)
+******* do some array processing
+******** set_length
+******** push_depth
+********* claimed_stack_depth->push
+********** NOTE: in this condition, single object in array will be appended again into claimed_stack_depth
+******* process_array_chunk_work
+******** loop : check every element (which is object) in array
+********* if should_scavenge
+********** claim_or_forward_depth
+*********** claim_or_forward_internal_depth
+************ if forwarded
+************* if is_obj_in_young
+************** card_table
+*************** inline_write_ref_field_gc
+************* encode_store_heap_oop_not_null
+************ else
+************* push_depth
+************** same as above
+***** else
+****** copy_and_push_safe_barrier
+******* if not forwarded
+******** copy_to_survivor_space
+******* inline_write_ref_field_gc (cardtable)
+**** drain_stacks_depth more
+** Push depth is done in
+*** process_array_chunk
+*** claim_or_forward_internal_depth
+*** copy_to_survivor_space -> is called by copy_and_push_safe_barrier
+**** variables to watch
+***** new_obj = null
+***** new_obj_size = constant
+**** if not promoted immediately
+***** main goal: allocate in young gen
+***** check age
+****** if age less than PSScavenge::tenuring_threshold()
+******* new_obj = young_lab.allocate(new_obj_size)
+******** if success -> new_obj is not null
+******** else
+********* if new_obj is null and young_gen is not full
+********** if new_obj_size is more than (YoungPLABSize / 2)
+*********** allocate directly into young_space
+************ if success -> new_obj is not null
+********** else
+*********** flush and fill young_lab
+************ if success -> new_obj is not null
+**** if new_obj still null
+***** try to allocate in old_gen
+****** process is almost as same as young_gen above
+****** with some note
+******* if new_obj still null in here, a whole promotion/reallocation is failed
+**** if new_obj is not null
+***** if GC Thread won the race (using cas_forward_to)
+****** this is comparison of newly allocated obj and mark header
+****** if not tenured -> increment age
+****** if new_obj_size > min_array_size_for_chunking and new_obj is Array of Object and large arrays
+******* chunk new_obj
+******** push_depth (see above)
+****** else
+******* push_contents
+******** if not primitive array
+********* ObjArrayKlass->oop_push_contents
+********** for every element (which is object), apply:
+*********** if should_scavenge
+************ claim_or_forward_depth (see above)
+***** else
+****** failed to win the race
+****** unallocate object (if tenured -> unallocate in old gen else young gen)

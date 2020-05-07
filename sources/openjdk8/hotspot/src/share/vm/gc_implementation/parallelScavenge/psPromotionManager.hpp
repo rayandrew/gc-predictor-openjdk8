@@ -206,7 +206,9 @@ class PSPromotionManager VALUE_OBJ_CLASS_SPEC {
     return claimed_stack_depth()->is_empty();
   }
 
-  inline void process_popped_location_depth(StarTask p);
+  // @rayandrew
+  // change function signature
+  inline uint process_popped_location_depth(StarTask p);
 
   template <class T> inline void claim_or_forward_depth(T* p);
 

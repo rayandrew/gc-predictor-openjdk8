@@ -221,19 +221,16 @@ size_t PSPromotionManager::drain_stacks_depth(bool totally_drain) {
     // Drain overflow stack first, so other threads can steal from
     // claimed stack while we work.
     while (tq->pop_overflow(p)) {
-      process_popped_location_depth(p);
-      counter++;
+      counter += process_popped_location_depth(p);
     }
 
     if (totally_drain) {
       while (tq->pop_local(p)) {
-        process_popped_location_depth(p);
-        counter++;
+        counter+= process_popped_location_depth(p);
       }
     } else {
       while (tq->size() > _target_stack_size && tq->pop_local(p)) {
-        process_popped_location_depth(p);
-        counter++;
+        counter += process_popped_location_depth(p);
       }
     }
   } while (totally_drain && !tq->taskqueue_empty() || !tq->overflow_empty());

@@ -235,11 +235,15 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
 }
 
 
-inline void PSPromotionManager::process_popped_location_depth(StarTask p) {
+inline uint PSPromotionManager::process_popped_location_depth(StarTask p) {
   if (is_oop_masked(p)) {
     assert(PSChunkLargeArrays, "invariant");
     oop const old = unmask_chunked_array_oop(p);
     process_array_chunk(old);
+
+    // @rayandrew
+    // add return 
+    return 0;
   } else {
     if (p.is_narrow()) {
       assert(UseCompressedOops, "Error");
@@ -247,6 +251,10 @@ inline void PSPromotionManager::process_popped_location_depth(StarTask p) {
     } else {
       PSScavenge::copy_and_push_safe_barrier<oop, /*promote_immediately=*/false>(this, p);
     }
+
+    // @rayandrew
+    // add return function
+    return 1;
   }
 }
 
