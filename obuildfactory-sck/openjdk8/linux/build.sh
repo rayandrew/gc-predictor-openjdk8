@@ -224,9 +224,14 @@ function build_new()
       mkdir -p $OBF_SOURCES_PATH/build/$BUILD_PROFILE
       pushd $OBF_SOURCES_PATH/build/$BUILD_PROFILE >>/dev/null
 
-      bash $OBF_SOURCES_PATH/common/autoconf/configure --with-boot-jdk=$OBF_BOOTDIR --with-freetype=$OBF_FREETYPE_DIR --with-cacerts-file=$OBF_DROP_DIR/cacerts \
-               --with-ccache-dir=$OBF_WORKSPACE_PATH/.ccache --enable-debug \
-               -with-build-number=$OBF_BUILD_DATE --with-milestone=$OBF_BUILD_NUMBER $EXTRA_FLAGS
+      bash $OBF_SOURCES_PATH/common/autoconf/configure \
+        --with-boot-jdk=$OBF_BOOTDIR \
+        --with-freetype=$OBF_FREETYPE_DIR \
+        --with-cacerts-file=$OBF_DROP_DIR/cacerts \
+        --with-ccache-dir=$OBF_WORKSPACE_PATH/.ccache \
+        --enable-debug \
+        -with-build-number=$OBF_BUILD_DATE \
+        --with-milestone=$OBF_BUILD_NUMBER $EXTRA_FLAGS
 
   else
 
@@ -243,9 +248,14 @@ function build_new()
       mkdir -p $OBF_SOURCES_PATH/build/$BUILD_PROFILE
       pushd $OBF_SOURCES_PATH/build/$BUILD_PROFILE >>/dev/null
 
-      bash $OBF_SOURCES_PATH/common/autoconf/configure --with-boot-jdk=$OBF_BOOTDIR --with-freetype=$OBF_FREETYPE_DIR --with-cacerts-file=$OBF_DROP_DIR/cacerts \
-               --with-ccache-dir=$OBF_WORKSPACE_PATH/.ccache \
-               -with-build-number=$OBF_BUILD_DATE --with-milestone=$OBF_MILESTONE $EXTRA_FLAGS
+      bash $OBF_SOURCES_PATH/common/autoconf/configure \
+        --with-boot-jdk=$OBF_BOOTDIR \
+        --with-freetype=$OBF_FREETYPE_DIR \
+        --with-cacerts-file=$OBF_DROP_DIR/cacerts \
+        --with-ccache-dir=$OBF_WORKSPACE_PATH/.ccache \
+        -with-build-number=$OBF_BUILD_DATE \
+        --with-milestone=$OBF_MILESTONE \
+        --with-extra-cxxflags="-DTRACESPINNING -DTASKQUEUE_STATS=1" $EXTRA_FLAGS
 
   fi
 
