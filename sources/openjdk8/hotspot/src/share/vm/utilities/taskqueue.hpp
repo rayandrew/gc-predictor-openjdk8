@@ -612,6 +612,12 @@ private:
   int _offered_termination;
 
 #ifdef TRACESPINNING
+  // @rayandrew
+  // add this to know each termination context
+  uint _yields;
+  uint _spins;
+  uint _peeks;
+
   static uint _total_yields;
   static uint _total_spins;
   static uint _total_peeks;
@@ -627,6 +633,10 @@ public:
   // "n_threads" is the number of threads to be terminated.  "queue_set" is a
   // queue sets of work queues of other threads.
   ParallelTaskTerminator(int n_threads, TaskQueueSetSuper* queue_set);
+
+  // @rayandrew
+  // add this to print info
+  ~ParallelTaskTerminator();
 
   // The current thread has no work, and is ready to terminate if everyone
   // else is.  If returns "true", all threads are terminated.  If returns

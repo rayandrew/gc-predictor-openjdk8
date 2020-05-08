@@ -30,6 +30,10 @@
 #include "utilities/stack.inline.hpp"
 #include "utilities/taskqueue.hpp"
 
+// @rayandrew
+// add gc id
+#include "gc_implementation/shared/gcId.hpp"
+
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 #ifdef TRACESPINNING
@@ -153,7 +157,25 @@ ParallelTaskTerminator::
 ParallelTaskTerminator(int n_threads, TaskQueueSetSuper* queue_set) :
   _n_threads(n_threads),
   _queue_set(queue_set),
-  _offered_termination(0) {}
+  _offered_termination(0),
+  _yields(0),
+  _spins(0),
+  _peeks(0)
+{}
+
+ParallelTaskTerminator::~ParallelTaskTerminator() {
+#ifdef TRACESPINNING
+  ucarelog_or_tty->print_cr("[ParallelTaskTerminator, "
+                            "id=%u"
+                            "yields=" UINT32_FORMAT
+                            "spins=" UINT32_FORMAT
+                            "peeks=" UINT32_FORMAT "]",
+                            GCId::current().id(),
+                            total_yields(),
+                            total_spins(),
+                            total_peeks());
+#endif
+}
 
 bool ParallelTaskTerminator::peek_in_queue_set() {
   return _queue_set->peek();
@@ -218,6 +240,7 @@ ParallelTaskTerminator::offer_termination(TerminatorTerminator* terminator) {
           hard_spin_limit = hard_spin_start;
 #ifdef TRACESPINNING
           _total_yields++;
+          _yields++;
 #endif
         } else {
           // Hard spin this time
@@ -229,6 +252,7 @@ ParallelTaskTerminator::offer_termination(TerminatorTerminator* terminator) {
           }
           hard_spin_count++;
 #ifdef TRACESPINNING
+          _spins++;
           _total_spins++;
 #endif
         }
@@ -247,6 +271,7 @@ ParallelTaskTerminator::offer_termination(TerminatorTerminator* terminator) {
       }
 
 #ifdef TRACESPINNING
+      _peeks;
       _total_peeks++;
 #endif
       if (peek_in_queue_set() ||
@@ -266,7 +291,7 @@ void ParallelTaskTerminator::print_termination_counts() {
   //   total_yields(),
   //   total_spins(),
   //   total_peeks());
-  ucarelog_or_tty->print_cr("[ParallelTaskTerminator, "
+  ucarelog_or_tty->print_cr("[ParallelTaskTerminatorGlobal, "
                             "yields=" UINT32_FORMAT
                             "spins=" UINT32_FORMAT
                             "peeks=" UINT32_FORMAT "]",
