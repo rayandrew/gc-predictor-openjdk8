@@ -166,7 +166,7 @@ ParallelTaskTerminator(int n_threads, TaskQueueSetSuper* queue_set) :
 ParallelTaskTerminator::~ParallelTaskTerminator() {
 #ifdef TRACESPINNING
   ucarelog_or_tty->print_cr("[ParallelTaskTerminator: "
-                            ", id=%u"
+                            "id=%u"
                             ", yields=" UINT32_FORMAT
                             ", spins=" UINT32_FORMAT
                             ", peeks=" UINT32_FORMAT "]",
