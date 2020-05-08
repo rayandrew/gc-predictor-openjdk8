@@ -91,7 +91,7 @@ void TaskQueueStats::print(outputStream* stream, unsigned int width) const
   // }
   // stream->print("%u", _stats[last_stat_id - 1]);
 
-  stream->print("qpush=%u"
+  stream->print(", qpush=%u"
                 ", qpop=%u"
                 ", qpops=%u"
                 ", qattempt=%u"

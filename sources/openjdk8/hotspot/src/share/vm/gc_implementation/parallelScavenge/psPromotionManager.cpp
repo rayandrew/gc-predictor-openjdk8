@@ -127,7 +127,7 @@ PSPromotionManager::print_local_stats(uint i) const {
                             ", masked_pushes=%u"
                             ", masked_steals=%u"
                             ", arrays_chunked=%u"
-                            ", array_chunks_processed=%u",
+                            ", array_chunks_processed=%u]",
                             i,
                             _masked_pushes,
                             _masked_steals,
