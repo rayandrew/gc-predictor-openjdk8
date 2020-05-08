@@ -85,11 +85,26 @@ void TaskQueueStats::print(outputStream* stream, unsigned int width) const
   //   stream->print(" " FMT, width, _stats[i]);
   // }
   // #undef FMT
-  
-  for (unsigned int i = 0; i < last_stat_id - 1; ++i) {
-    stream->print(", %u", _stats[i]);
-  }
-  stream->print("%u", _stats[last_stat_id - 1]);
+
+  // for (unsigned int i = 0; i < last_stat_id - 1; ++i) {
+  //   stream->print(", %u", _stats[i]);
+  // }
+  // stream->print("%u", _stats[last_stat_id - 1]);
+
+  stream->print("qpush=%u"
+                ", qpop=%u"
+                ", qpops=%u"
+                ", qattempt=%u"
+                ", qsteal=%u"
+                ", opush=%u"
+                ", omax=%u",
+                _stats[0],
+                _stats[1],
+                _stats[2],
+                _stats[3],
+                _stats[4],
+                _stats[5],
+                _stats[6]);
 }
 
 #ifdef ASSERT

@@ -110,7 +110,7 @@ PSPromotionManager::print_taskqueue_stats(uint i) const {
   // tty->print("%3u ", i);
   // _claimed_stack_depth.stats.print();
   // tty->cr();
-  ucarelog_or_tty->print("[TaskQueueStats, worker=%3u", i);
+  ucarelog_or_tty->print("[TaskQueueStats, worker=%u", i);
   _claimed_stack_depth.stats.print(ucarelog_or_tty);
   ucarelog_or_tty->print_cr("]");
 }
