@@ -261,11 +261,18 @@ ParallelTaskTerminator::offer_termination(TerminatorTerminator* terminator) {
 
 #ifdef TRACESPINNING
 void ParallelTaskTerminator::print_termination_counts() {
-  gclog_or_tty->print_cr("ParallelTaskTerminator Total yields: " UINT32_FORMAT
-    " Total spins: " UINT32_FORMAT " Total peeks: " UINT32_FORMAT,
-    total_yields(),
-    total_spins(),
-    total_peeks());
+  // gclog_or_tty->print_cr("ParallelTaskTerminator Total yields: " UINT32_FORMAT
+  //   " Total spins: " UINT32_FORMAT " Total peeks: " UINT32_FORMAT,
+  //   total_yields(),
+  //   total_spins(),
+  //   total_peeks());
+  ucarelog_or_tty->print_cr("[ParallelTaskTerminator, "
+                            "yields=" UINT32_FORMAT
+                            "spins=" UINT32_FORMAT
+                            "peeks=" UINT32_FORMAT "]",
+                            total_yields(),
+                            total_spins(),
+                            total_peeks());
 }
 #endif
 
