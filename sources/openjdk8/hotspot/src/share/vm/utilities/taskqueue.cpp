@@ -271,7 +271,7 @@ ParallelTaskTerminator::offer_termination(TerminatorTerminator* terminator) {
       }
 
 #ifdef TRACESPINNING
-      _peeks;
+      _peeks++;
       _total_peeks++;
 #endif
       if (peek_in_queue_set() ||
