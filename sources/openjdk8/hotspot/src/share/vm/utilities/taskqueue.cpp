@@ -171,9 +171,9 @@ ParallelTaskTerminator::~ParallelTaskTerminator() {
                             ", spins=" UINT32_FORMAT
                             ", peeks=" UINT32_FORMAT "]",
                             GCId::current().id(),
-                            total_yields(),
-                            total_spins(),
-                            total_peeks());
+                            _yields,
+                            _spins,
+                            _peeks);
 #endif
 }
 
