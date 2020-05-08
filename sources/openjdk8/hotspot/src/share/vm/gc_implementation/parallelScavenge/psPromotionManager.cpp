@@ -107,17 +107,32 @@ bool PSPromotionManager::post_scavenge(YoungGCTracer& gc_tracer) {
 #if TASKQUEUE_STATS
 void
 PSPromotionManager::print_taskqueue_stats(uint i) const {
-  tty->print("%3u ", i);
-  _claimed_stack_depth.stats.print();
-  tty->cr();
+  // tty->print("%3u ", i);
+  // _claimed_stack_depth.stats.print();
+  // tty->cr();
+  ucarelog_or_tty->print("[TaskQueueStats, worker=%3u", i);
+  _claimed_stack_depth.stats.print(ucarelog_or_tty);
+  ucarelog_or_tty->print_cr("]");
 }
 
 void
 PSPromotionManager::print_local_stats(uint i) const {
-  #define FMT " " SIZE_FORMAT_W(10)
-  tty->print_cr("%3u" FMT FMT FMT FMT, i, _masked_pushes, _masked_steals,
-                _arrays_chunked, _array_chunks_processed);
-  #undef FMT
+  // #define FMT " " SIZE_FORMAT_W(10)
+  // tty->print_cr("%3u" FMT FMT FMT FMT, i, _masked_pushes, _masked_steals,
+  //               _arrays_chunked, _array_chunks_processed);
+  // #undef FMT
+
+  ucarelog_or_tty->print_cr("[TaskQueueLocalStats"
+                            ", worker=%u"
+                            ", masked_pushes=%u"
+                            ", masked_steals=%u"
+                            ", arrays_chunked=%u"
+                            ", array_chunks_processed=%u",
+                            i,
+                            _masked_pushes,
+                            _masked_steals,
+                            _arrays_chunked,
+                            _array_chunks_processed);
 }
 
 static const char* const pm_stats_hdr[] = {
@@ -128,20 +143,24 @@ static const char* const pm_stats_hdr[] = {
 
 void
 PSPromotionManager::print_stats() {
-  tty->print_cr("== GC Tasks Stats, GC %3d",
-                Universe::heap()->total_collections());
+  // tty->print_cr("== GC Tasks Stats, GC %3d",
+                // Universe::heap()->total_collections());
 
-  tty->print("thr "); TaskQueueStats::print_header(1); tty->cr();
-  tty->print("--- "); TaskQueueStats::print_header(2); tty->cr();
+  // tty->print("thr "); TaskQueueStats::print_header(1); tty->cr();
+  // tty->print("--- "); TaskQueueStats::print_header(2); tty->cr();
+  ucarelog_or_tty->print_cr("Start of TaskQueueStats");
   for (uint i = 0; i < ParallelGCThreads + 1; ++i) {
     manager_array(i)->print_taskqueue_stats(i);
   }
+  ucarelog_or_tty->print_cr("End of TaskQueueStats");
 
-  const uint hlines = sizeof(pm_stats_hdr) / sizeof(pm_stats_hdr[0]);
-  for (uint i = 0; i < hlines; ++i) tty->print_cr("%s", pm_stats_hdr[i]);
+  // const uint hlines = sizeof(pm_stats_hdr) / sizeof(pm_stats_hdr[0]);
+  // for (uint i = 0; i < hlines; ++i) tty->print_cr("%s", pm_stats_hdr[i]);
+  ucarelog_or_tty->print_cr("Start of TaskQueueLocalStats");
   for (uint i = 0; i < ParallelGCThreads + 1; ++i) {
     manager_array(i)->print_local_stats(i);
   }
+  ucarelog_or_tty->print_cr("End of TaskQueueLocalStats");
 }
 
 void

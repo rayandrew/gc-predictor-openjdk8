@@ -79,12 +79,17 @@ void TaskQueueStats::print_header(unsigned int line, outputStream* const stream,
 
 void TaskQueueStats::print(outputStream* stream, unsigned int width) const
 {
-  #define FMT SIZE_FORMAT_W(*)
-  stream->print(FMT, width, _stats[0]);
-  for (unsigned int i = 1; i < last_stat_id; ++i) {
-    stream->print(" " FMT, width, _stats[i]);
+  // #define FMT SIZE_FORMAT_W(*)
+  // stream->print(FMT, width, _stats[0]);
+  // for (unsigned int i = 1; i < last_stat_id; ++i) {
+  //   stream->print(" " FMT, width, _stats[i]);
+  // }
+  // #undef FMT
+  
+  for (unsigned int i = 0; i < last_stat_id - 1; ++i) {
+    stream->print(", %u", _stats[i]);
   }
-  #undef FMT
+  stream->print("%u", _stats[last_stat_id - 1]);
 }
 
 #ifdef ASSERT
