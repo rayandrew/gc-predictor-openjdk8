@@ -165,11 +165,11 @@ ParallelTaskTerminator(int n_threads, TaskQueueSetSuper* queue_set) :
 
 ParallelTaskTerminator::~ParallelTaskTerminator() {
 #ifdef TRACESPINNING
-  ucarelog_or_tty->print_cr("[ParallelTaskTerminator, "
-                            "id=%u"
-                            "yields=" UINT32_FORMAT
-                            "spins=" UINT32_FORMAT
-                            "peeks=" UINT32_FORMAT "]",
+  ucarelog_or_tty->print_cr("[ParallelTaskTerminator: "
+                            ", id=%u"
+                            ", yields=" UINT32_FORMAT
+                            ", spins=" UINT32_FORMAT
+                            ", peeks=" UINT32_FORMAT "]",
                             GCId::current().id(),
                             total_yields(),
                             total_spins(),
@@ -291,10 +291,10 @@ void ParallelTaskTerminator::print_termination_counts() {
   //   total_yields(),
   //   total_spins(),
   //   total_peeks());
-  ucarelog_or_tty->print_cr("[ParallelTaskTerminatorGlobal, "
+  ucarelog_or_tty->print_cr("[ParallelTaskTerminatorGlobal: "
                             "yields=" UINT32_FORMAT
-                            "spins=" UINT32_FORMAT
-                            "peeks=" UINT32_FORMAT "]",
+                            ", spins=" UINT32_FORMAT
+                            ", peeks=" UINT32_FORMAT "]",
                             total_yields(),
                             total_spins(),
                             total_peeks());
