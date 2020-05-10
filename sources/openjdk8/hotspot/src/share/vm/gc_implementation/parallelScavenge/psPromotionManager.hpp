@@ -68,6 +68,11 @@ class PSPromotionManager VALUE_OBJ_CLASS_SPEC {
   size_t                              _arrays_chunked;
   size_t                              _array_chunks_processed;
 
+  // @rayandrew
+  // add this counter
+  size_t                              _copied_counter;
+  size_t                              _tenured_counter;
+
   void print_taskqueue_stats(uint i) const;
   void print_local_stats(uint i) const;
   static void print_stats();

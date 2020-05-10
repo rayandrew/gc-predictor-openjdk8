@@ -124,11 +124,15 @@ PSPromotionManager::print_local_stats(uint i) const {
 
   ucarelog_or_tty->print_cr("[TaskQueueLocalStats"
                             ", worker=%u"
+                            ", copied=%zu"
+                            ", tenured=%zu"
                             ", masked_pushes=%u"
                             ", masked_steals=%u"
                             ", arrays_chunked=%u"
                             ", array_chunks_processed=%u]",
                             i,
+                            _copied_counter,
+                            _tenured_counter,
                             _masked_pushes,
                             _masked_steals,
                             _arrays_chunked,
@@ -168,6 +172,7 @@ PSPromotionManager::reset_stats() {
   claimed_stack_depth()->stats.reset();
   _masked_pushes = _masked_steals = 0;
   _arrays_chunked = _array_chunks_processed = 0;
+  _copied_counter = _tenured_counter = 0;
 }
 #endif // TASKQUEUE_STATS
 

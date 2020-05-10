@@ -231,6 +231,16 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
   }
 #endif
 
+// @rayandrew
+// added this to increment counter
+#ifdef TASKQUEUE_STATS
+  if (PSScavenge::should_scavenge(&new_obj)) {
+    _copied_counter++;
+  } else {
+    _tenured_counter++;
+  }
+#endif 
+
   return new_obj;
 }
 
