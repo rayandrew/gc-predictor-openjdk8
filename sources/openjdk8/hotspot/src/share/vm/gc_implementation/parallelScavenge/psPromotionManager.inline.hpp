@@ -265,12 +265,14 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
   if (PSScavenge::should_scavenge(&new_obj)) {
     t_surviving.add(t_copying);
     _copied_counter++;
-    PSPromotionManager::surviving_rate()->sample(static_cast<float>(t_surviving.seconds() * 1000000 / new_obj->size()));
+    // PSPromotionManager::surviving_rate()->sample(static_cast<float>(t_surviving.seconds() * 1000000 / new_obj->size()));
+    PSPromotionManager::surviving_rate()->sample(static_cast<float>(t_surviving.seconds() * 1000000));
     PSPromotionManager::inc_copied();
   } else {
     t_tenuring.add(t_copying);
     _tenured_counter++;
-    PSPromotionManager::tenuring_rate()->sample(static_cast<float>(t_tenuring.seconds() * 1000000 / new_obj->size()));
+    // PSPromotionManager::tenuring_rate()->sample(static_cast<float>(t_tenuring.seconds() * 1000000 / new_obj->size()));
+    PSPromotionManager::tenuring_rate()->sample(static_cast<float>(t_tenuring.seconds() * 1000000));
     PSPromotionManager::inc_tenured();
   }
 #endif 
