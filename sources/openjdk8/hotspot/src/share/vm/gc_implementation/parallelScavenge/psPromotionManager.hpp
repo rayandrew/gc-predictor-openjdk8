@@ -33,6 +33,10 @@
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/taskqueue.hpp"
 
+// @rayandrew
+// add include files
+#include "gc_implementation/shared/gcUtil.hpp"
+
 //
 // psPromotionManager is used by a single thread to manage object survival
 // during a scavenge. The promotion manager contains thread local data only.
@@ -68,14 +72,58 @@ class PSPromotionManager VALUE_OBJ_CLASS_SPEC {
   size_t                              _arrays_chunked;
   size_t                              _array_chunks_processed;
 
+  static AdaptivePaddedNoZeroDevAverage*     _surviving_rate;
+  static AdaptivePaddedNoZeroDevAverage*     _tenuring_rate;
+  // AdaptivePaddedNoZeroDevAverage      _copying_rate;
+
   // @rayandrew
   // add this counter
   size_t                              _copied_counter;
   size_t                              _tenured_counter;
 
+  static size_t                       _total_copied;
+  static size_t                       _total_tenured;
+  static size_t                       _global_total_copied;
+  static size_t                       _global_total_tenured;
+
+
   void print_taskqueue_stats(uint i) const;
   void print_local_stats(uint i) const;
   static void print_stats();
+
+  static AdaptivePaddedNoZeroDevAverage* surviving_rate() {
+    return _surviving_rate;
+  }
+
+  static AdaptivePaddedNoZeroDevAverage* tenuring_rate() {
+    return _tenuring_rate;
+  }
+
+  static size_t total_copied() {
+    return _total_copied;
+  }
+
+  static size_t total_tenured() {
+    return _total_tenured;
+  }
+
+  static size_t global_total_copied() {
+    return _global_total_copied;
+  }
+
+  static size_t global_total_tenured() {
+    return _global_total_tenured;
+  }
+
+  static void inc_copied() {
+    _total_copied++;
+    _global_total_copied++;
+  }
+
+  static void inc_tenured() {
+    _total_tenured++;
+    _global_total_tenured++;
+  }
 
   void reset_stats();
 #endif // TASKQUEUE_STATS

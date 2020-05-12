@@ -31,6 +31,10 @@
 #include "gc_implementation/parallelScavenge/psScavenge.hpp"
 #include "oops/oop.psgc.inline.hpp"
 
+// @rayandrew
+// add include files
+#include "runtime/timer.hpp"
+
 inline PSPromotionManager* PSPromotionManager::manager_array(int index) {
   assert(_manager_array != NULL, "access of NULL manager_array");
   assert(index >= 0 && index <= (int)ParallelGCThreads, "out of range manager_array access");
@@ -75,6 +79,12 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
 
   oop new_obj = NULL;
 
+  // @rayandrew
+  // add info variables
+  elapsedTimer t_surviving;
+  elapsedTimer t_tenuring;
+  elapsedTimer t_copying;
+
   // NOTE! We must be very careful with any methods that access the mark
   // in o. There may be multiple threads racing on it, and it may be forwarded
   // at any time. Do not use oop methods for accessing the mark!
@@ -86,6 +96,9 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
     size_t new_obj_size = o->size();
 
     if (!promote_immediately) {
+      // @rayandrew: start timer
+      t_surviving.start();
+
       // Find the objects age, MT safe.
       uint age = (test_mark->has_displaced_mark_helper() /* o->has_displaced_mark() */) ?
         test_mark->displaced_mark_helper()->age() : test_mark->age();
@@ -113,10 +126,16 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
           }
         }
       }
+
+      // @rayandrew: stop timer
+      t_surviving.start();
     }
 
     // Otherwise try allocating obj tenured
     if (new_obj == NULL) {
+      // @rayandrew: start timer
+      t_tenuring.start();
+
 #ifndef PRODUCT
       if (Universe::heap()->promotion_should_fail()) {
         return oop_promotion_failed(o, test_mark);
@@ -163,9 +182,15 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
           return oop_promotion_failed(o, test_mark);
         }
       }
+
+      // @rayandrew: stopping timer
+      t_tenuring.stop();
     }
 
     assert(new_obj != NULL, "allocation should have succeeded");
+
+    // @rayandrew: start timer
+    t_copying.start();
 
     // Copy obj
     Copy::aligned_disjoint_words((HeapWord*)o, (HeapWord*)new_obj, new_obj_size);
@@ -221,6 +246,9 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
     new_obj = o->forwardee();
   }
 
+  // @rayandrew: stop timer
+  t_copying.stop();
+
 #ifndef PRODUCT
   // This code must come after the CAS test, or it will print incorrect
   // information.
@@ -235,9 +263,15 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
 // added this to increment counter
 #ifdef TASKQUEUE_STATS
   if (PSScavenge::should_scavenge(&new_obj)) {
+    t_surviving.add(t_copying);
     _copied_counter++;
+    PSPromotionManager::surviving_rate()->sample(static_cast<float>(t_surviving.seconds() * 1000000 / new_obj->size()));
+    PSPromotionManager::inc_copied();
   } else {
+    t_tenuring.add(t_copying);
     _tenured_counter++;
+    PSPromotionManager::tenuring_rate()->sample(static_cast<float>(t_tenuring.seconds() * 1000000 / new_obj->size()));
+    PSPromotionManager::inc_tenured();
   }
 #endif 
 

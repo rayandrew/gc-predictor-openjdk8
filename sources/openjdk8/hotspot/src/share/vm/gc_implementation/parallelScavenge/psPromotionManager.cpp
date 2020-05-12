@@ -42,6 +42,17 @@ OopStarTaskQueueSet*           PSPromotionManager::_stack_array_depth = NULL;
 PSOldGen*                      PSPromotionManager::_old_gen = NULL;
 MutableSpace*                  PSPromotionManager::_young_space = NULL;
 
+// @rayandrew
+// add metrics
+#if TASKQUEUE_STATS
+AdaptivePaddedNoZeroDevAverage* PSPromotionManager::_surviving_rate = NULL;
+AdaptivePaddedNoZeroDevAverage* PSPromotionManager::_tenuring_rate  = NULL;
+size_t                          PSPromotionManager::_total_copied = 0;
+size_t                          PSPromotionManager::_global_total_copied = 0;
+size_t                          PSPromotionManager::_total_tenured = 0;
+size_t                          PSPromotionManager::_global_total_tenured = 0;
+#endif
+
 void PSPromotionManager::initialize() {
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
@@ -64,6 +75,14 @@ void PSPromotionManager::initialize() {
   }
   // The VMThread gets its own PSPromotionManager, which is not available
   // for work stealing.
+
+
+#if TASKQUEUE_STATS
+  // @rayandrew
+  // add initialization
+  _surviving_rate = new AdaptivePaddedNoZeroDevAverage(5, 3);
+  _tenuring_rate  = new AdaptivePaddedNoZeroDevAverage(3, 3);
+#endif
 }
 
 PSPromotionManager* PSPromotionManager::gc_thread_promotion_manager(int index) {
@@ -152,6 +171,20 @@ PSPromotionManager::print_stats() {
 
   // tty->print("thr "); TaskQueueStats::print_header(1); tty->cr();
   // tty->print("--- "); TaskQueueStats::print_header(2); tty->cr();
+
+  ucarelog_or_tty->print_cr("[PSPromotionManagerInfo: "
+                            "copying_rate=%lf, "
+                            "tenuring_rate=%lf, "
+                            "total_copied=%zu, "
+                            "global_total_copied=%zu, "
+                            "total_tenured=%zu, "
+                            "global_total_tenured=%zu]",
+                            surviving_rate()->padded_average(),
+                            tenuring_rate()->padded_average(),
+                            total_copied(),
+                            global_total_copied(),
+                            total_tenured(),
+                            global_total_tenured());
   ucarelog_or_tty->print_cr("Start of TaskQueueStats");
   for (uint i = 0; i < ParallelGCThreads + 1; ++i) {
     manager_array(i)->print_taskqueue_stats(i);
@@ -173,6 +206,7 @@ PSPromotionManager::reset_stats() {
   _masked_pushes = _masked_steals = 0;
   _arrays_chunked = _array_chunks_processed = 0;
   _copied_counter = _tenured_counter = 0;
+  PSPromotionManager::_total_copied = PSPromotionManager::_total_tenured = 0;
 }
 #endif // TASKQUEUE_STATS
 
