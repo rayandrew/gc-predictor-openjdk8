@@ -140,6 +140,8 @@ PSPromotionManager::print_local_stats(uint i) const {
   // tty->print_cr("%3u" FMT FMT FMT FMT, i, _masked_pushes, _masked_steals,
   //               _arrays_chunked, _array_chunks_processed);
   // #undef FMT
+  const float copy_rate = 4.58;
+  const float tenure_rate = 2.81;
 
   ucarelog_or_tty->print_cr("[TaskQueueLocalStats"
                             ", worker=%u"
@@ -148,14 +150,18 @@ PSPromotionManager::print_local_stats(uint i) const {
                             ", masked_pushes=%u"
                             ", masked_steals=%u"
                             ", arrays_chunked=%u"
-                            ", array_chunks_processed=%u]",
+                            ", array_chunks_processed=%u"
+                            ", estimated_copied=%lfus"
+                            ", estimated_tenured=%lfus]",
                             i,
                             _copied_counter,
                             _tenured_counter,
                             _masked_pushes,
                             _masked_steals,
                             _arrays_chunked,
-                            _array_chunks_processed);
+                            _array_chunks_processed,
+                            copy_rate * _copied_counter,
+                            tenure_rate * _tenured_counter);
 }
 
 static const char* const pm_stats_hdr[] = {
@@ -171,7 +177,7 @@ PSPromotionManager::print_stats() {
 
   // tty->print("thr "); TaskQueueStats::print_header(1); tty->cr();
   // tty->print("--- "); TaskQueueStats::print_header(2); tty->cr();
-
+  //
   ucarelog_or_tty->print_cr("[PSPromotionManagerInfo: "
                             "copying_rate=%lf, "
                             "tenuring_rate=%lf, "
@@ -185,6 +191,10 @@ PSPromotionManager::print_stats() {
                             global_total_copied(),
                             total_tenured(),
                             global_total_tenured());
+
+  // ucarelog_or_tty->print_cr("[Estimation: copied=%lfms, tenured=%lfms]",
+  //                           copy_rate * total_copied(),
+  //                           tenure_rate * total_tenured());
   ucarelog_or_tty->print_cr("Start of TaskQueueStats");
   for (uint i = 0; i < ParallelGCThreads + 1; ++i) {
     manager_array(i)->print_taskqueue_stats(i);
