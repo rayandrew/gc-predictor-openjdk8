@@ -198,7 +198,7 @@ PSPromotionManager::print_stats() {
                             "global_total_copied=%zu, "
                             "global_total_tenured=%zu, "
                             "global_total_copied_in_words=%zu, "
-                            "global_total_tenured_in_words=%zu]"
+                            "global_total_tenured_in_words=%zu]",
                             surviving_rate()->padded_average(),
                             tenuring_rate()->padded_average(),
                             total_copied(),
