@@ -47,10 +47,16 @@ MutableSpace*                  PSPromotionManager::_young_space = NULL;
 #if TASKQUEUE_STATS
 AdaptivePaddedNoZeroDevAverage* PSPromotionManager::_surviving_rate = NULL;
 AdaptivePaddedNoZeroDevAverage* PSPromotionManager::_tenuring_rate  = NULL;
+
 size_t                          PSPromotionManager::_total_copied = 0;
+size_t                          PSPromotionManager::_total_copied_in_words = 0;
 size_t                          PSPromotionManager::_global_total_copied = 0;
+size_t                          PSPromotionManager::_global_total_copied_in_words = 0;
+
 size_t                          PSPromotionManager::_total_tenured = 0;
+size_t                          PSPromotionManager::_total_tenured_in_words = 0;
 size_t                          PSPromotionManager::_global_total_tenured = 0;
+size_t                          PSPromotionManager::_global_total_tenured_in_words = 0;
 #endif
 
 void PSPromotionManager::initialize() {
@@ -140,13 +146,15 @@ PSPromotionManager::print_local_stats(uint i) const {
   // tty->print_cr("%3u" FMT FMT FMT FMT, i, _masked_pushes, _masked_steals,
   //               _arrays_chunked, _array_chunks_processed);
   // #undef FMT
-  const float copy_rate = 22.325850;
-  const float tenure_rate = 21.929741;
+  const float copy_rate = 5.843613;
+  const float tenure_rate = 8.634840;
 
   ucarelog_or_tty->print_cr("[TaskQueueLocalStats"
                             ", worker=%u"
                             ", copied=%zu"
                             ", tenured=%zu"
+                            ", copied_in_words=%zu"
+                            ", tenured_in_words=%zu"
                             ", masked_pushes=%u"
                             ", masked_steals=%u"
                             ", arrays_chunked=%u"
@@ -156,12 +164,14 @@ PSPromotionManager::print_local_stats(uint i) const {
                             i,
                             _copied_counter,
                             _tenured_counter,
+                            _copied_in_words,
+                            _tenured_in_words,
                             _masked_pushes,
                             _masked_steals,
                             _arrays_chunked,
                             _array_chunks_processed,
-                            copy_rate * _copied_counter,
-                            tenure_rate * _tenured_counter);
+                            copy_rate * _copied_in_words,
+                            tenure_rate * _tenured_in_words);
 }
 
 static const char* const pm_stats_hdr[] = {
@@ -182,15 +192,23 @@ PSPromotionManager::print_stats() {
                             "copying_rate=%lf, "
                             "tenuring_rate=%lf, "
                             "total_copied=%zu, "
-                            "global_total_copied=%zu, "
                             "total_tenured=%zu, "
-                            "global_total_tenured=%zu]",
+                            "total_copied_in_words=%zu, "
+                            "total_tenured_in_words=%zu, "
+                            "global_total_copied=%zu, "
+                            "global_total_tenured=%zu, "
+                            "global_total_copied_in_words=%zu, "
+                            "global_total_tenured_in_words=%zu]"
                             surviving_rate()->padded_average(),
                             tenuring_rate()->padded_average(),
                             total_copied(),
-                            global_total_copied(),
                             total_tenured(),
-                            global_total_tenured());
+                            total_copied_in_words(),
+                            total_tenured_in_words(),
+                            global_total_copied(),
+                            global_total_tenured(),
+                            global_total_copied_in_words(),
+                            global_total_tenured_in_words());
 
   // ucarelog_or_tty->print_cr("[Estimation: copied=%lfms, tenured=%lfms]",
   //                           copy_rate * total_copied(),
@@ -216,7 +234,9 @@ PSPromotionManager::reset_stats() {
   _masked_pushes = _masked_steals = 0;
   _arrays_chunked = _array_chunks_processed = 0;
   _copied_counter = _tenured_counter = 0;
+  _copied_in_words = _tenured_in_words = 0;
   PSPromotionManager::_total_copied = PSPromotionManager::_total_tenured = 0;
+  PSPromotionManager::_total_copied_in_words = PSPromotionManager::_total_tenured_in_words = 0;
 }
 #endif // TASKQUEUE_STATS
 

@@ -81,11 +81,20 @@ class PSPromotionManager VALUE_OBJ_CLASS_SPEC {
   size_t                              _copied_counter;
   size_t                              _tenured_counter;
 
+  size_t                              _copied_in_words;
+  size_t                              _tenured_in_words;
+
   static size_t                       _total_copied;
   static size_t                       _total_tenured;
+
+  static size_t                       _total_copied_in_words;
+  static size_t                       _total_tenured_in_words;
+
   static size_t                       _global_total_copied;
   static size_t                       _global_total_tenured;
 
+  static size_t                       _global_total_copied_in_words;
+  static size_t                       _global_total_tenured_in_words;
 
   void print_taskqueue_stats(uint i) const;
   void print_local_stats(uint i) const;
@@ -107,6 +116,14 @@ class PSPromotionManager VALUE_OBJ_CLASS_SPEC {
     return _total_tenured;
   }
 
+  static size_t total_copied_in_words() {
+    return _total_copied_in_words;
+  }
+
+  static size_t total_tenured_in_words() {
+    return _total_tenured_in_words;
+  }
+
   static size_t global_total_copied() {
     return _global_total_copied;
   }
@@ -115,12 +132,24 @@ class PSPromotionManager VALUE_OBJ_CLASS_SPEC {
     return _global_total_tenured;
   }
 
-  static void inc_copied() {
+  static size_t global_total_copied_in_words() {
+    return _global_total_copied_in_words;
+  }
+
+  static size_t global_total_tenured_in_words() {
+    return _global_total_tenured_in_words;
+  }
+
+  static void inc_copied(size_t words) {
+    _total_copied_in_words += words;
+    _global_total_copied_in_words += words;
     _total_copied++;
     _global_total_copied++;
   }
 
-  static void inc_tenured() {
+  static void inc_tenured(size_t words) {
+    _total_tenured_in_words += words;
+    _global_total_tenured_in_words += words;
     _total_tenured++;
     _global_total_tenured++;
   }
