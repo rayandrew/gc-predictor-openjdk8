@@ -140,8 +140,8 @@ PSPromotionManager::print_local_stats(uint i) const {
   // tty->print_cr("%3u" FMT FMT FMT FMT, i, _masked_pushes, _masked_steals,
   //               _arrays_chunked, _array_chunks_processed);
   // #undef FMT
-  const float copy_rate = 4.58;
-  const float tenure_rate = 2.81;
+  const float copy_rate = 22.325850;
+  const float tenure_rate = 21.929741;
 
   ucarelog_or_tty->print_cr("[TaskQueueLocalStats"
                             ", worker=%u"
